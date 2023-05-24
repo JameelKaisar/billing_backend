@@ -3,12 +3,62 @@ from pydantic import BaseModel
 
 class MeterBase(BaseModel):
     initial_reading: int
+    class Config:
+        orm_mode = True
 
 class MeterCreate(MeterBase):
     pass
-
 class MeterRead(MeterBase):
     meter_id: int
+
+class MeterUpdate(MeterBase):
+    meter_id: int
+
+class MeterDelete(BaseModel):
+    meter_id: int
+    class Config:
+        orm_mode = True
+
+# quarter type
+class QuarterTypeBase(BaseModel):
+    quarter_name: str
+    class Config:
+        orm_mode = True
+
+class QuarterTypeCreate(QuarterTypeBase):
+    pass
+
+class QuarterTypeRead(QuarterTypeBase):
+    quarter_id: int
+
+class QuarterTypeUpdate(QuarterTypeRead):
+    pass
+
+class QuarterTypeDelete(BaseModel):
+    quarter_id: int
+    class Config:
+        orm_mode = True
+
+# room
+
+class RoomBase(BaseModel):
+    room_number: int
+    quarter_type_id: int
+    class Config:
+        orm_mode = True 
+class RoomCreate(RoomBase):
+    is_metered: bool
+
+class RoomRead(RoomCreate):
+    room_id: int
+
+class RoomUpdate(RoomCreate):
+    room_id: int
+
+class RoomDelete(BaseModel):
+    room_id: int
+    class Config:
+        orm_mode = True 
 
 # Flat Rate
 class FlatRateBase(BaseModel):
@@ -86,79 +136,10 @@ class ReadingUpdate(ReadingBase,ReadingCreate):
 
 class ReadingDelete(ReadingBase):
     pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-    
-
-
-
-
     class Config:
         orm_mode = True
 
-class MeterUpdate(MeterBase):
-    meter_id: int
 
-class MeterDelete(MeterUpdate):
-    pass
-
-
-class QuarterTypeBase(BaseModel):
-    quarter_name: str
-
-class QuarterTypeCreate(QuarterTypeBase):
-    quarter_id: int
-
-class QuarterTypeRead(QuarterTypeCreate):
-    
-    class Config:
-        orm_mode = True
-
-class QuarterTypeUpdate(QuarterTypeCreate):
-    pass
-
-class QuarterTypeDelete(QuarterTypeCreate):
-    pass
-
-
-class RoomBase(BaseModel):
-    room_number: int
-    quarter_type_id: int
-
-class RoomCreate(RoomBase):
-    is_metered: bool
-
-class RoomRead(RoomBase):
-    room_id: int
-
-    class Config:
-        orm_mode = True 
-
-class RoomUpdate(RoomCreate):
-    room_id: int
-
-class RoomDelete(RoomUpdate):
-    pass
 
 
 class UserToRoomBase(BaseModel):
@@ -221,4 +202,5 @@ class BillRead(BillCreate):
 
 class BillDelete(BillCreate):
     bill_id: int
+
 

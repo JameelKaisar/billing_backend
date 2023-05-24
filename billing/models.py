@@ -21,20 +21,20 @@ class QuarterType(Base):
     __tablename__ = "quarter_types"
 
     quarter_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    quarter_name = Column(String, nullable=False)
-
-    rooms = relationship("Room", back_populates="quarter_type")
+    quarter_name = Column(String, nullable=False, unique=True)
+    rooms = relationship("Room", cascade="all, delete", backref="quarter_type")
+    # rooms = relationship("Room", back_populates="quarter_type", cascade="all, delete")
 
 
 class Room(Base):
     __tablename__ = "rooms"
 
     room_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    quarter_type_id = Column(Integer, ForeignKey("quarter_types.quarter_id"), nullable=False)
+    quarter_type_id = Column(Integer, ForeignKey("quarter_types.quarter_id", ondelete="CASCADE"), nullable=False)
     room_number = Column(Integer, nullable=False)
     is_metered = Column(Boolean, nullable=False)
 
-    quarter_type = relationship("QuarterType", back_populates="rooms")
+    # quarter_type = relationship("QuarterType", back_populates="rooms", cascade="all, delete")
 
 
 class UserToRoom(Base):
