@@ -54,8 +54,8 @@ class MeterToRoom(Base):
     __tablename__ = "meter_to_room"
 
     meter_to_room_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    meter_id = Column(Integer, ForeignKey("meters.meter_id"), nullable=False)
-    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False)
+    meter_id = Column(Integer, ForeignKey("meters.meter_id"), nullable=False, unique=True)
+    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False, unique=True)
 
     # meter = relationship("Meter", back_populates="meter_to_room")
     # room = relationship("Room", back_populates="meter_to_room")
@@ -65,7 +65,7 @@ class FlatRate(Base):
     __tablename__ = "flat_rates"
 
     flat_rate_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    flat_rate_name = Column(String, nullable=False)
+    flat_rate_name = Column(String, nullable=False, unique=True)
     flat_rate_value = Column(Integer, nullable=False)
 
 
