@@ -8,6 +8,8 @@ class User(Base):
     __tablename__ = "users"
 
     user_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    # email = Column(String, nullable=False, unique=True)
+    user_name= Column(String, nullable=False)
 
 
 class Meter(Base):
@@ -41,8 +43,8 @@ class UserToRoom(Base):
     __tablename__ = "user_to_room"
 
     user_to_room_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, unique=True)
+    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False, unique=True)
 
     # user = relationship("User", back_populates="user_to_room")
     # room = relationship("Room", back_populates="user_to_room"

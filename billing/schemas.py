@@ -1,6 +1,26 @@
 from pydantic import BaseModel
 
+#user
 
+class UserBase(BaseModel):
+    user_id: int
+    class Config:
+        orm_mode = True
+    
+class UserCreate(BaseModel):
+    user_name: str
+    class Config:
+        orm_mode = True
+class UserRead(UserBase):
+    user_name: str
+
+class UserUpdate(UserBase):
+    user_name: str
+    
+class UserDelete(UserBase):
+    pass
+
+# meter
 class MeterBase(BaseModel):
     initial_reading: int
     class Config:
@@ -59,6 +79,31 @@ class RoomDelete(BaseModel):
     room_id: int
     class Config:
         orm_mode = True 
+
+
+#user to room
+class UserToRoomBase(BaseModel):
+    user_id: int
+    room_id: int
+    class Config:
+        orm_mode = True
+
+class UserToRoomCreate(UserToRoomBase):
+    pass
+
+class UserToRoomRead(UserToRoomBase):
+    user_to_room_id: int
+
+    class Config:
+        orm_mode = True
+
+class UserToRoomUpdate(UserToRoomBase):
+    user_to_room_id: int
+
+class UserToRoomDelete(BaseModel):
+    user_to_room_id: int
+    class Config:
+        orm_mode = True
 
 # Flat Rate
 class FlatRateBase(BaseModel):
@@ -141,25 +186,6 @@ class ReadingDelete(ReadingBase):
 
 
 
-
-class UserToRoomBase(BaseModel):
-    user_id: int
-    room_id: int
-
-class UserToRoomCreate(UserToRoomBase):
-    pass
-
-class UserToRoomRead(UserToRoomBase):
-    user_to_room_id: int
-
-    class Config:
-        orm_mode = True
-
-class UserToRoomUpdate(UserToRoomBase):
-    user_to_room_id: int
-
-class UserToRoomDelete(UserToRoomUpdate):
-    pass
 
 
 class MeterToRoomBase(BaseModel):
