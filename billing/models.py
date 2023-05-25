@@ -117,7 +117,7 @@ class Bill(Base):
     amount = Column(Integer, nullable=False)
     __table_args__ = (
         CheckConstraint('month >= 1 AND month <= 12', name='check_month'),
-        CheckConstraint('units_consumed >= 0', name='check_units_consumed'),
+        CheckConstraint('year > 0', name='check_year'),
     )
     # user = relationship("User", back_populates="bills")
     # room = relationship("Room", back_populates="bills")
