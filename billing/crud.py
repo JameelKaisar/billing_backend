@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from billing import models, schemas
 
+#user
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.user_id == user_id).first()
 
@@ -35,10 +36,8 @@ def delete_user(db: Session, user: schemas.UserDelete):
 def get_meter(db: Session, meter_id: int):
     return db.query(models.Meter).filter(models.Meter.meter_id == meter_id).first()
 
-
 def get_meters(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Meter).offset(skip).limit(limit).all()
-
 
 def create_meter(db: Session, meter: schemas.MeterCreate):
     initial_reading = meter.initial_reading
@@ -96,7 +95,6 @@ def delete_quarter_type(db: Session, quarter_type: schemas.QuarterTypeDelete):
     return db_quarter_type
 
 # room
-
 def get_room(db: Session, room_id: int):
     return db.query(models.Room).filter(models.Room.room_id == room_id).first()
 
@@ -132,8 +130,8 @@ def delete_room(db: Session, room: schemas.RoomDelete):
     db.delete(db_room)
     db.commit()
     return db_room
-#user to room
 
+#user to room
 def get_user_to_room(db: Session, user_to_room_id: int):
     return db.query(models.UserToRoom).filter(models.UserToRoom.user_to_room_id == user_to_room_id).first()
 
@@ -150,7 +148,6 @@ def create_user_to_room(db: Session, user_to_room: schemas.UserToRoomCreate):
     db.refresh(db_user_to_room)
     return db_user_to_room
         
-
 def update_user_to_room(db: Session, user_to_room: schemas.UserToRoomUpdate):
     user_id = user_to_room.user_id
     room_id = user_to_room.room_id
@@ -160,9 +157,113 @@ def update_user_to_room(db: Session, user_to_room: schemas.UserToRoomUpdate):
     db.commit()
     db.refresh(db_user_to_room)
     return db_user_to_room
+
 def delete_user_to_room(db: Session, user_to_room: schemas.UserToRoomDelete):
     user_id = user_to_room.user_id
     db_user_to_room = db.query(models.UserToRoom).filter(models.UserToRoom.user_id == user_id).first()
     db.delete(db_user_to_room)
     db.commit()
     return db_user_to_room
+
+#meter to room
+def get_meter_to_room(db: Session, meter_to_room_id: int):
+    return db.query(models.MeterToRoom).filter(models.MeterToRoom.meter_to_room_id == meter_to_room_id).first()
+
+def get_meters_to_rooms(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.MeterToRoom).offset(skip).limit(limit).all()
+
+def create_meter_to_room(db: Session, meter_to_room: schemas.MeterToRoomCreate):
+    meter_id = meter_to_room.meter_id
+    room_id = meter_to_room.room_id
+    db_meter_to_room = models.MeterToRoom(meter_id=meter_id, room_id=room_id)
+    db.add(db_meter_to_room)
+    db.commit()
+    db.refresh(db_meter_to_room)
+    return db_meter_to_room
+
+def update_meter_to_room(db: Session, meter_to_room: schemas.MeterToRoomUpdate):
+    meter_id = meter_to_room.meter_id
+    room_id = meter_to_room.room_id
+    db_meter_to_room = db.query(models.MeterToRoom).filter(models.MeterToRoom.meter_id == meter_id).first()
+    db_meter_to_room.room_id = room_id
+    db.commit()
+    db.refresh(db_meter_to_room)
+    return db_meter_to_room
+
+def delete_meter_to_room(db: Session, meter_to_room: schemas.MeterToRoomDelete):
+    meter_id = meter_to_room.meter_id
+    db_meter_to_room = db.query(models.MeterToRoom).filter(models.MeterToRoom.meter_id == meter_id).first()
+    db.delete(db_meter_to_room)
+    db.commit()
+    return db_meter_to_room
+
+#flat rate
+def get_flat_rate(db: Session, flat_rate_id: int):
+    return db.query(models.FlatRate).filter(models.FlatRate.flat_rate_id == flat_rate_id).first()
+
+def get_flat_rates(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.FlatRate).offset(skip).limit(limit).all()
+
+def create_flat_rate(db: Session, flat_rate: schemas.FlatRateCreate):
+    flat_rate_name = flat_rate.flat_rate_name
+    flat_rate_value = flat_rate.flat_rate_value
+    db_flat_rate = models.FlatRate(flat_rate_name=flat_rate_name, flat_rate_value=flat_rate_value)
+    db.add(db_flat_rate)
+    db.commit()
+    db.refresh(db_flat_rate)
+    return db_flat_rate
+
+def update_flat_rate(db: Session, flat_rate: schemas.FlatRateUpdate):
+    flat_rate_id = flat_rate.flat_rate_id
+    flat_rate_name = flat_rate.flat_rate_name
+    flat_rate_value = flat_rate.flat_rate_value
+    db_flat_rate = db.query(models.FlatRate).filter(models.FlatRate.flat_rate_id == flat_rate_id).first()
+    db_flat_rate.flat_rate_name = flat_rate_name
+    db_flat_rate.flat_rate_value = flat_rate_value
+    db.commit()
+    db.refresh(db_flat_rate)
+    return db_flat_rate
+
+def delete_flat_rate(db: Session, flat_rate: schemas.FlatRateDelete):
+    flat_rate_id = flat_rate.flat_rate_id
+    db_flat_rate = db.query(models.FlatRate).filter(models.FlatRate.flat_rate_id == flat_rate_id).first()
+    db.delete(db_flat_rate)
+    db.commit()
+    return db_flat_rate
+
+# meter rate
+def get_meter_rate(db: Session, meter_rate_id: int):
+    return db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == meter_rate_id).first()
+
+def get_meter_rates(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.MeterRate).offset(skip).limit(limit).all()
+
+def create_meter_rate(db: Session, meter_rate: schemas.MeterRateCreate):
+    meter_rate_name = meter_rate.meter_rate_name
+    meter_rate_value = meter_rate.meter_rate_value
+    meter_rate_upto = meter_rate.meter_rate_upto
+    db_meter_rate = models.MeterRate(meter_rate_name=meter_rate_name, meter_rate_value=meter_rate_value, meter_rate_upto=meter_rate_upto)
+    db.add(db_meter_rate)
+    db.commit()
+    db.refresh(db_meter_rate)
+    return db_meter_rate
+
+def update_meter_rate(db: Session, meter_rate: schemas.MeterRateUpdate):
+    meter_rate_id = meter_rate.meter_rate_id
+    meter_rate_name = meter_rate.meter_rate_name
+    meter_rate_value = meter_rate.meter_rate_value
+    db_meter_rate = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == meter_rate_id).first()
+    db_meter_rate.meter_rate_name = meter_rate_name
+    db_meter_rate.meter_rate_value = meter_rate_value
+    db.commit()
+    db.refresh(db_meter_rate)
+    return db_meter_rate
+
+def delete_meter_rate(db: Session, meter_rate: schemas.MeterRateDelete):
+    meter_rate_id = meter_rate.meter_rate_id
+    db_meter_rate = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == meter_rate_id).first()
+    db.delete(db_meter_rate)
+    db.commit()
+    return db_meter_rate
+
+

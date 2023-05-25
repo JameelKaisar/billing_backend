@@ -102,6 +102,30 @@ class UserToRoomUpdate(UserToRoomBase):
 
 class UserToRoomDelete(BaseModel):
     user_to_room_id: int
+
+    class Config:
+        orm_mode = True
+
+# meter to room
+class MeterToRoomBase(BaseModel):
+    meter_id: int
+    room_id: int
+
+    class Config:
+        orm_mode = True
+
+class MeterToRoomCreate(MeterToRoomBase):
+    pass
+
+class MeterToRoomRead(MeterToRoomBase):
+    meter_to_room_id: int
+
+class MeterToRoomUpdate(MeterToRoomRead):
+    pass
+
+class MeterToRoomDelete(BaseModel):
+    meter_to_room_id: int
+
     class Config:
         orm_mode = True
 
@@ -109,18 +133,25 @@ class UserToRoomDelete(BaseModel):
 class FlatRateBase(BaseModel):
     flat_rate_id:int
 
+    class Config:
+        orm_mode = True
+
 class FlatRateCreate(BaseModel):
     flat_rate_name: str
     flat_rate_value: int
 
+    class Config:
+        orm_mode = True
+
 class FlatRateRead(FlatRateBase):
-    pass
+    flat_rate_name: str
+    flat_rate_value: int
 
 class FlatRateUpdate(FlatRateBase):
     flat_rate_name: str
     flat_rate_value: int
 
-class FaltRateDelete(FlatRateBase):
+class FlatRateDelete(FlatRateBase):
     pass
 
 # Flat Rate To Room
@@ -146,15 +177,23 @@ class FlatRateToRoomDelete(FlatRateToRoomBase):
 class MeterRateBase(BaseModel):
     meter_rate_id:int
 
+    class Config:
+        orm_mode = True
+
 class MeterRateCreate(BaseModel):
     meter_rate_name: str
     meter_rate_upto: int
     meter_rate_value: int
 
-class MeterRateRead(MeterRateBase):
-    pass
+    class Config:
+        orm_mode = True
 
-class MeterRateUpdate(MeterRateBase):
+class MeterRateRead(MeterRateBase):
+    meter_rate_name: str
+    meter_rate_upto: int
+    meter_rate_value: int
+
+class MeterRateUpdate(MeterRateRead):
     meter_rate_name: str
     meter_rate_upto: int
     meter_rate_value: int
@@ -184,30 +223,7 @@ class ReadingDelete(ReadingBase):
     class Config:
         orm_mode = True
 
-
-
-
-
-class MeterToRoomBase(BaseModel):
-    meter_id: int
-    room_id: int
-
-class MeterToRoomCreate(MeterToRoomBase):
-    pass
-
-class MeterToRoomRead(MeterToRoomBase):
-    meter_to_room_id: int
-
-    class Config:
-        orm_mode = True
-
-class MeterToRoomUpdate(BaseModel):
-    meter_to_room_id: int
-
-class MeterToRoomDelete(MeterToRoomUpdate):
-    pass
-
-
+#bill
 class BillBase(BaseModel):
     user_id: int
     room_id: int
