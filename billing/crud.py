@@ -2,7 +2,36 @@ from sqlalchemy.orm import Session
 
 from billing import models, schemas
 
+def get_user(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.user_id == user_id).first()
 
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.User).offset(skip).limit(limit).all()
+
+def create_users(db: Session, user: schemas.UserCreate):
+    db_user = models.User(**user.dict())
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def update_user(db: Session, user: schemas.UserUpdate):
+    user_id = user.user_id
+    user_name = user.user_name
+    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    db_user.user_name = user_name
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def delete_user(db: Session, user: schemas.UserDelete):
+    user_id = user.user_id
+    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    db.delete(db_user)
+    db.commit()
+    return db_user
+
+# meter
 def get_meter(db: Session, meter_id: int):
     return db.query(models.Meter).filter(models.Meter.meter_id == meter_id).first()
 
@@ -103,3 +132,37 @@ def delete_room(db: Session, room: schemas.RoomDelete):
     db.delete(db_room)
     db.commit()
     return db_room
+#user to room
+
+def get_user_to_room(db: Session, user_to_room_id: int):
+    return db.query(models.UserToRoom).filter(models.UserToRoom.user_to_room_id == user_to_room_id).first()
+
+def get_users_to_rooms(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.UserToRoom).offset(skip).limit(limit).all()
+
+def create_user_to_room(db: Session, user_to_room: schemas.UserToRoomCreate):
+    user_id = user_to_room.user_id
+    room_id = user_to_room.room_id
+    #chck if user is already in room
+    db_user_to_room = models.UserToRoom(user_id=user_id, room_id=room_id)
+    db.add(db_user_to_room)
+    db.commit()
+    db.refresh(db_user_to_room)
+    return db_user_to_room
+        
+
+def update_user_to_room(db: Session, user_to_room: schemas.UserToRoomUpdate):
+    user_id = user_to_room.user_id
+    room_id = user_to_room.room_id
+    #if exists and try except in user to room
+    db_user_to_room = db.query(models.UserToRoom).filter(models.UserToRoom.user_id == user_id).first()
+    db_user_to_room.room_id = room_id
+    db.commit()
+    db.refresh(db_user_to_room)
+    return db_user_to_room
+def delete_user_to_room(db: Session, user_to_room: schemas.UserToRoomDelete):
+    user_id = user_to_room.user_id
+    db_user_to_room = db.query(models.UserToRoom).filter(models.UserToRoom.user_id == user_id).first()
+    db.delete(db_user_to_room)
+    db.commit()
+    return db_user_to_room
