@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, String, ForeignKey
+from sqlalchemy import Column, Integer, Boolean, String, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
 
 from billing.database import Base
@@ -74,7 +74,7 @@ class FlatRateToRoom(Base):
 
     flat_rate_to_room_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     flat_rate_id = Column(Integer, ForeignKey("flat_rates.flat_rate_id"), nullable=False)
-    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False)
+    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False, unique=True)
 
     # flat_rate = relationship("FlatRate", back_populates="flat_rate_to_room")
     # room = relationship("Room", back_populates="flat_rate_to_room")
@@ -98,7 +98,10 @@ class Reading(Base):
     year = Column(Integer, nullable=False)
     units_consumed = Column(Integer, nullable=False)
     locked = Column(Boolean, default=False)
-
+    __table_args__ = (
+        CheckConstraint('month >= 1 AND month <= 12', name='check_month'),
+        CheckConstraint('units_consumed >= 0', name='check_units_consumed'),
+    )
     # meter = relationship("Meter", back_populates="readings")
 
 
@@ -112,6 +115,9 @@ class Bill(Base):
     month = Column(Integer, nullable=False)
     year = Column(Integer, nullable=False)
     amount = Column(Integer, nullable=False)
-
+    __table_args__ = (
+        CheckConstraint('month >= 1 AND month <= 12', name='check_month'),
+        CheckConstraint('units_consumed >= 0', name='check_units_consumed'),
+    )
     # user = relationship("User", back_populates="bills")
     # room = relationship("Room", back_populates="bills")

@@ -363,4 +363,143 @@ def delete_meter_rate(meter_rate: schemas.MeterRateDelete, db: Session = Depends
         raise HTTPException(status_code=400, detail="Meter Rate not found")
     crud.delete_meter_rate(db, meter_rate)
     return meter_rate
+
+# flat_rate_to_room
+@app.post("/flat_rate_to_room/", response_model=schemas.FlatRateToRoomRead)
+def create_flat_rate_to_room(flat_rate_to_room: schemas.FlatRateToRoomCreate, db: Session = Depends(get_db)):
+    room_exists = crud.get_room(db, flat_rate_to_room.room_id)
+    if not room_exists:
+        raise HTTPException(status_code=400, detail="Room not found")
+    flat_rate_exists = crud.get_flat_rate(db, flat_rate_to_room.flat_rate_id)
+    if not flat_rate_exists:
+        raise HTTPException(status_code=400, detail="Flat Rate not found")
+    room = db.query(Room).filter(Room.room_id == flat_rate_to_room.room_id).first()
+    if room.is_metered:
+        raise HTTPException(status_code=400, detail="Room is metered")
+    try:
+        return crud.create_flat_rate_to_room(db=db, flat_rate_to_room=flat_rate_to_room)
+    except:
+        raise HTTPException(status_code=400, detail="Flat Rate to Room already exists")
+
+@app.get("/flat_rate_to_room/", response_model=schemas.FlatRateToRoomRead)
+def read_flat_rate_to_room(flat_rate_to_room_id: int, db: Session = Depends(get_db)):
+    flat_rate_to_room = crud.get_flat_rate_to_room(db, flat_rate_to_room_id)
+    if not flat_rate_to_room:
+        raise HTTPException(status_code=400, detail="Flat Rate to Room not found")
+    return flat_rate_to_room
+
+@app.get("/flat_rate_to_rooms/", response_model=list[schemas.FlatRateToRoomRead])
+def get_flat_rate_to_rooms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    flat_rate_to_rooms = crud.get_flat_rate_to_rooms(db, skip=skip, limit=limit)
+    return flat_rate_to_rooms
+
+@app.put("/flat_rate_to_room/", response_model=schemas.FlatRateToRoomRead)
+def update_flat_rate_to_room(flat_rate_to_room: schemas.FlatRateToRoomUpdate, db: Session = Depends(get_db)):
+    fr_to_room = crud.get_flat_rate_to_room(db, flat_rate_to_room.flat_rate_to_room_id)
+    if not fr_to_room:
+        raise HTTPException(status_code=400, detail="Flat Rate to Room not found")
+    room_exists = crud.get_room(db, flat_rate_to_room.room_id)
+    if not room_exists:
+        raise HTTPException(status_code=400, detail="Room not found")
+    flat_rate_exists = crud.get_flat_rate(db, flat_rate_to_room.flat_rate_id)
+    if not flat_rate_exists:
+        raise HTTPException(status_code=400, detail="Flat Rate not found")
+    room = db.query(Room).filter(Room.room_id == flat_rate_to_room.room_id).first()
+    if room.is_metered:
+        raise HTTPException(status_code=400, detail="Room is metered")
+    try:
+        return crud.update_flat_rate_to_room(db, flat_rate_to_room)
+    except:
+        raise HTTPException(status_code=400, detail="Flat Rate to Room already exists")
     
+@app.delete("/flat_rate_to_room/", response_model=schemas.FlatRateToRoomRead)
+def delete_flat_rate_to_room(flat_rate_to_room: schemas.FlatRateToRoomDelete, db: Session = Depends(get_db)):
+    flat_rate_to_room = crud.get_flat_rate_to_room(db, flat_rate_to_room.flat_rate_to_room_id)
+    if not flat_rate_to_room:
+        raise HTTPException(status_code=400, detail="Flat Rate to Room not found")
+    crud.delete_flat_rate_to_room(db, flat_rate_to_room)
+    return flat_rate_to_room
+
+# reading
+@app.post("/reading/", response_model=schemas.ReadingRead)
+def create_reading(reading: schemas.ReadingCreate, db: Session = Depends(get_db)):
+    meter_exists = db.query(Meter).filter(Meter.meter_id == reading.meter_id).first()
+    if not meter_exists:
+        raise HTTPException(status_code=400, detail="Meter not found")
+    try:
+        return crud.create_reading(db=db, reading=reading)
+    except:
+        raise HTTPException(status_code=400, detail="Something went wrong :(")
+    
+@app.get("/reading/", response_model=schemas.ReadingRead)
+def read_reading(reading_id: int, db: Session = Depends(get_db)):
+    reading = crud.get_reading(db, reading_id)
+    if not reading:
+        raise HTTPException(status_code=400, detail="Reading not found")
+    return reading
+
+@app.get("/readings/", response_model=list[schemas.ReadingRead])
+def get_readings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    readings = crud.get_readings(db, skip=skip, limit=limit)
+    return readings
+
+@app.put("/reading/", response_model=schemas.ReadingRead)
+def update_reading(reading: schemas.ReadingUpdate, db: Session = Depends(get_db)):
+    meter_exists = db.query(Meter).filter(Meter.meter_id == reading.meter_id).first()
+    if not meter_exists:
+        raise HTTPException(status_code=400, detail="Meter not found")
+    try:
+        return crud.update_reading(db, reading)
+    except:
+        raise HTTPException(status_code=400, detail="Something went wrong :(")
+    
+@app.delete("/reading/", response_model=schemas.ReadingRead)
+def delete_reading(reading: schemas.ReadingDelete, db: Session = Depends(get_db)):
+    reading = crud.get_reading(db, reading.reading_id)
+    if not reading:
+        raise HTTPException(status_code=400, detail="Reading not found")
+    crud.delete_reading(db, reading)
+    return reading
+
+
+# bill
+
+# check user_id, meter_id and room_id belong to same user
+@app.post("/bill/", response_model=schemas.BillRead)
+def create_bill(bill: schemas.BillCreate, db: Session = Depends(get_db)):
+    room_exists = crud.get_room(db, bill.room_id)
+    if not room_exists:
+        raise HTTPException(status_code=400, detail="Room not found")
+    bill_exists = crud.get_bill(db, bill.bill_id)
+    if bill_exists:
+        raise HTTPException(status_code=400, detail="Bill already exists")
+    room_exists = crud.get_room(db, bill.room_id)
+    if not room_exists:
+        raise HTTPException(status_code=400, detail="Room not found")
+    meter_exists = crud.get_meter(db, bill.meter_id)
+    if not meter_exists:
+        raise HTTPException(status_code=400, detail="Meter not found")
+    try:
+        return crud.create_bill(db=db, bill=bill)
+    except:
+        raise HTTPException(status_code=400, detail="Something went wrong :(")
+    
+@app.get("/bill/", response_model=schemas.BillRead)
+def read_bill(bill_id: int, db: Session = Depends(get_db)):
+    bill = crud.get_bill(db, bill_id)
+    if not bill:
+        raise HTTPException(status_code=400, detail="Bill not found")
+    return bill
+
+@app.get("/bills/", response_model=list[schemas.BillRead])
+def get_bills(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    bills = crud.get_bills(db, skip=skip, limit=limit)
+    return bills
+    
+@app.delete("/bill/", response_model=schemas.BillRead)
+def delete_bill(bill: schemas.BillDelete, db: Session = Depends(get_db)):
+    bill = crud.get_bill(db, bill.bill_id)
+    if not bill:
+        raise HTTPException(status_code=400, detail="Bill not found")
+    crud.delete_bill(db, bill)
+    return bill

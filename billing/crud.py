@@ -267,3 +267,102 @@ def delete_meter_rate(db: Session, meter_rate: schemas.MeterRateDelete):
     return db_meter_rate
 
 
+# flat_rate_to_room
+
+def get_flat_rate_to_room(db: Session, flat_rate_to_room_id: int):
+    return db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.flat_rate_to_room_id == flat_rate_to_room_id).first()
+
+def get_flat_rate_to_rooms(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.FlatRateToRoom).offset(skip).limit(limit).all()
+
+def create_flat_rate_to_room(db: Session, flat_rate_to_room: schemas.FlatRateToRoomCreate):
+    flat_rate_id = flat_rate_to_room.flat_rate_id
+    room_id = flat_rate_to_room.room_id
+    db_flat_rate_to_room = models.FlatRateToRoom(flat_rate_id=flat_rate_id, room_id=room_id)
+    db.add(db_flat_rate_to_room)
+    db.commit()
+    db.refresh(db_flat_rate_to_room)
+    return db_flat_rate_to_room
+
+def update_flat_rate_to_room(db: Session, flat_rate_to_room: schemas.FlatRateToRoomUpdate):
+    flat_rate_to_room_id = flat_rate_to_room.flat_rate_to_room_id
+    flat_rate_id = flat_rate_to_room.flat_rate_id
+    room_id = flat_rate_to_room.room_id
+    db_flat_rate_to_room = db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.flat_rate_to_room_id == flat_rate_to_room_id).first()
+    db_flat_rate_to_room.flat_rate_id = flat_rate_id
+    db_flat_rate_to_room.room_id = room_id
+    db.commit()
+    db.refresh(db_flat_rate_to_room)
+    return db_flat_rate_to_room
+
+def delete_flat_rate_to_room(db: Session, flat_rate_to_room: schemas.FlatRateToRoomDelete):
+    flat_rate_to_room_id = flat_rate_to_room.flat_rate_to_room_id
+    db_flat_rate_to_room = db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.flat_rate_to_room_id == flat_rate_to_room_id).first()
+    db.delete(db_flat_rate_to_room)
+    db.commit()
+    return db_flat_rate_to_room
+
+# reading
+def get_reading(db: Session, reading_id: int):
+    return db.query(models.Reading).filter(models.Reading.reading_id == reading_id).first()
+
+def get_readings(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Reading).offset(skip).limit(limit).all()
+
+def create_reading(db: Session, reading: schemas.ReadingCreate):
+    meter_id = reading.meter_id
+    month = reading.month
+    year = reading.year
+    units_consumed = reading.units_consumed
+    db_reading = models.Reading(meter_id=meter_id, month=month, year=year, units_consumed=units_consumed)
+    db.add(db_reading)
+    db.commit()
+    db.refresh(db_reading)
+    return db_reading
+
+def update_reading(db: Session, reading: schemas.ReadingUpdate):
+    reading_id = reading.reading_id
+    meter_id = reading.meter_id
+    month = reading.month
+    year = reading.year
+    units_consumed = reading.units_consumed
+    db_reading = db.query(models.Reading).filter(models.Reading.reading_id == reading_id).first()
+    db_reading.meter_id = meter_id
+    db_reading.month = month
+    db_reading.year = year
+    db_reading.units_consumed = units_consumed
+    db.commit()
+    db.refresh(db_reading)
+    return db_reading
+
+def delete_reading(db: Session, reading: schemas.ReadingDelete):
+    reading_id = reading.reading_id
+    db_reading = db.query(models.Reading).filter(models.Reading.reading_id == reading_id).first()
+    db.delete(db_reading)
+    db.commit()
+    return db_reading
+
+# bill
+
+def get_bill(db: Session, bill_id: int):
+    return db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
+
+def get_bills(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Bill).offset(skip).limit(limit).all()
+
+def create_bill(db: Session, bill: schemas.BillCreate):
+    bill_name = bill.bill_name
+    bill_value = bill.bill_value
+    bill_upto = bill.bill_upto
+    db_bill = models.Bill(bill_name=bill_name, bill_value=bill_value, bill_upto=bill_upto)
+    db.add(db_bill)
+    db.commit()
+    db.refresh(db_bill)
+    return db_bill
+
+def delete_bill(db: Session, bill: schemas.BillDelete):
+    bill_id = bill.bill_id
+    db_bill = db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
+    db.delete(db_bill)
+    db.commit()
+    return db_bill
