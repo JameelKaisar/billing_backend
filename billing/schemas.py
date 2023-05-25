@@ -157,11 +157,15 @@ class FlatRateDelete(FlatRateBase):
 # Flat Rate To Room
 class FlatRateToRoomBase(BaseModel):
     flat_rate_to_room_id: int
+    class Config:
+        orm_mode = True
 
 
 class FlatRateToRoomCreate(BaseModel):
     flat_rate_id: int
     room_id: int
+    class Config:
+        orm_mode = True
 
 class FlatRateToRoomRead(FlatRateToRoomBase):
     pass
@@ -204,14 +208,16 @@ class MeterRateDelete(MeterRateBase):
 # Reading
 class ReadingBase(BaseModel):
     reading_id: int
-    
+    class Config:
+        orm_mode = True
 
 class ReadingCreate(BaseModel):
     meter_id: int
     month: int
     year: int
     units_consumed: int
-
+    class Config:
+        orm_mode = True
 class ReadingRead(ReadingBase):
     locked: bool
 
@@ -220,8 +226,6 @@ class ReadingUpdate(ReadingBase,ReadingCreate):
 
 class ReadingDelete(ReadingBase):
     pass
-    class Config:
-        orm_mode = True
 
 #bill
 class BillBase(BaseModel):
