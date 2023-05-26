@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from billing import models, schemas
 
@@ -313,7 +314,15 @@ def create_reading(db: Session, reading: schemas.ReadingCreate):
     meter_id = reading.meter_id
     month = reading.month
     year = reading.year
-    units_consumed = reading.units_consumed
+    prev_reading = (
+        db.query(func.sum(models.Reading.units_consumed))
+        .filter(models.Reading.meter_id == meter_id)
+        .scalar() or 0
+    )
+    initial_reading = db.query(models.Meter.initial_reading).filter(models.Meter.meter_id == meter_id).scalar()
+    prev_reading += initial_reading
+    
+    units_consumed = reading.units_consumed - prev_reading
     db_reading = models.Reading(meter_id=meter_id, month=month, year=year, units_consumed=units_consumed)
     db.add(db_reading)
     db.commit()
@@ -325,7 +334,15 @@ def update_reading(db: Session, reading: schemas.ReadingUpdate):
     meter_id = reading.meter_id
     month = reading.month
     year = reading.year
-    units_consumed = reading.units_consumed
+    prev_reading = (
+        db.query(func.sum(models.Reading.units_consumed))
+        .filter(models.Reading.meter_id == meter_id)
+        .scalar() or 0
+    )
+    initial_reading = db.query(models.Meter.initial_reading).filter(models.Meter.id == meter_id).scalar()
+    prev_reading += initial_reading
+    
+    units_consumed = reading.units_consumed - prev_reading
     db_reading = db.query(models.Reading).filter(models.Reading.reading_id == reading_id).first()
     db_reading.meter_id = meter_id
     db_reading.month = month
