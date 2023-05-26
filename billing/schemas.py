@@ -219,6 +219,10 @@ class ReadingCreate(BaseModel):
     class Config:
         orm_mode = True
 class ReadingRead(ReadingBase):
+    meter_id: int
+    month: int
+    year: int
+    units_consumed: int
     locked: bool
 
 class ReadingUpdate(ReadingBase,ReadingCreate):

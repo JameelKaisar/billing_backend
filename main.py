@@ -1,10 +1,10 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, not_
+from sqlalchemy import and_, or_, not_, func
 
 from billing import crud, models, schemas
-from billing.models import QuarterType, Room, User, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate
+from billing.models import QuarterType, Room, User, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading
 from billing.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -421,11 +421,22 @@ def delete_flat_rate_to_room(flat_rate_to_room: schemas.FlatRateToRoomDelete, db
     return flat_rate_to_room
 
 # reading
+# not let user enter reading if it is from previous month -> year <= y & month < m
 @app.post("/reading/", response_model=schemas.ReadingRead)
 def create_reading(reading: schemas.ReadingCreate, db: Session = Depends(get_db)):
     meter_exists = db.query(Meter).filter(Meter.meter_id == reading.meter_id).first()
     if not meter_exists:
         raise HTTPException(status_code=400, detail="Meter not found")
+    reading_exists = db.query(Reading).filter(Reading.meter_id == reading.meter_id, Reading.month == reading.month, Reading.year == reading.year).first()
+    if reading_exists:
+        raise HTTPException(status_code=400, detail="Reading already exists")
+    #check that prev won't get added
+    max_year = db.query(func.max(Reading.year)).filter(Reading.meter_id == reading.meter_id).scalar()
+    if max_year is not None and reading.year < max_year:
+        raise HTTPException(status_code=400, detail="Cannot enter reading for a previous year")
+    max_month = db.query(func.max(Reading.month)).filter(Reading.meter_id == reading.meter_id, Reading.year == max_year).scalar()
+    if max_month is not None and reading.year == max_year and reading.month < max_month:
+        raise HTTPException(status_code=400, detail="Cannot enter reading for a previous month")
     try:
         return crud.create_reading(db=db, reading=reading)
     except:
@@ -448,6 +459,18 @@ def update_reading(reading: schemas.ReadingUpdate, db: Session = Depends(get_db)
     meter_exists = db.query(Meter).filter(Meter.meter_id == reading.meter_id).first()
     if not meter_exists:
         raise HTTPException(status_code=400, detail="Meter not found")
+    reading_exists = db.query(Reading).filter(Reading.meter_id == reading.meter_id, Reading.month == reading.month, Reading.year == reading.year).first()
+    if not reading_exists:
+        return HTTPException(status_code=400, detail="Reading not found")
+    if reading_exists.locked:
+        return HTTPException(status_code=400, detail="Reading is locked")
+    # check if prev reading exists
+    max_year = db.query(func.max(Reading.year)).filter(Reading.meter_id == reading.meter_id).scalar()
+    if max_year is not None and reading.year < max_year:
+        raise HTTPException(status_code=400, detail="Cannot enter reading for a previous year")
+    max_month = db.query(func.max(Reading.month)).filter(Reading.meter_id == reading.meter_id, Reading.year == max_year).scalar()
+    if max_month is not None and reading.year == max_year and reading.month < max_month:
+        raise HTTPException(status_code=400, detail="Cannot enter reading for a previous month")
     try:
         return crud.update_reading(db, reading)
     except:
@@ -464,7 +487,7 @@ def delete_reading(reading: schemas.ReadingDelete, db: Session = Depends(get_db)
 
 # bill
 
-# check user_id, meter_id and room_id belong to same user
+# check user_id, meter_id and room_id belong to same user -> not req as we are calculating it ourselves in backend
 @app.post("/bill/", response_model=schemas.BillRead)
 def create_bill(bill: schemas.BillCreate, db: Session = Depends(get_db)):
     room_exists = crud.get_room(db, bill.room_id)
