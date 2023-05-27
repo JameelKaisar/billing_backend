@@ -280,6 +280,35 @@ def delete_meter_to_room(meter_to_room: schemas.MeterToRoomDelete, db: Session =
     crud.delete_meter_to_room(db, meter_to_room)
     return meter_to_room
 
+# room_creation
+@app.post("/room_creation/", response_model=schemas.RoomCreationRead)
+def create_room_creation(room_creation: schemas.RoomCreationCreate, db: Session = Depends(get_db)):
+    if True:
+        quarter_type = db.query(QuarterType).filter(QuarterType.quarter_id == room_creation.quarter_type_id).first()
+        if not quarter_type:
+            raise HTTPException(status_code=400, detail="Quarter type does not exist")
+        existing_room = db.query(Room).filter(Room.quarter_type_id == room_creation.quarter_type_id,Room.room_number == room_creation.room_number).first()
+        if not existing_room:
+             return crud.create_room_creation(db=db, room_creation=room_creation)
+        else:
+            raise HTTPException(status_code=400, detail="Room already exists")
+       
+    # except:
+    #     raise HTTPException(status_code=400, detail="Room creation failed")
+    
+@app.get("/room_creation/", response_model=schemas.RoomCreationRead)
+def read_room_creation(room_creation_id: int, db: Session = Depends(get_db)):
+    room_creation = crud.get_room_creation(db, room_creation_id)
+    if not room_creation:
+        raise HTTPException(status_code=400, detail="Room creation not found")
+    return room_creation
+
+@app.get("/rooms_creation/", response_model=list[schemas.RoomCreationRead])
+
+def get_room_creations(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    room_creations = crud.get_room_creations(db, skip=skip, limit=limit)
+    return room_creations
+
 # flat_rate
 @app.post("/flat_rate/", response_model=schemas.FlatRateRead)
 def create_flat_rate(flat_rate: schemas.FlatRateCreate, db: Session = Depends(get_db)):
