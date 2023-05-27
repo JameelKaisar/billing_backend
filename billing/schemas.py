@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 #user
 
@@ -125,6 +126,35 @@ class MeterToRoomUpdate(MeterToRoomRead):
 
 class MeterToRoomDelete(BaseModel):
     meter_to_room_id: int
+
+    class Config:
+        orm_mode = True
+
+# Room Creation Metered
+
+class RoomCreationBase(BaseModel):
+    quarter_type_id: int
+    room_number: int
+    is_metered: bool
+
+    class Config:
+        orm_mode = True
+
+class RoomCreationCreate(RoomCreationBase):
+    initial_reading: Optional[int]
+    meter_rate_id: Optional[int]
+    flat_rate_id: Optional[int]
+    
+
+class RoomCreationRead(RoomCreationCreate):
+    room_id: int
+
+
+class RoomCreationUpdate(RoomCreationBase):
+    room_id: int
+
+class RoomCreationDelete(BaseModel):
+    room_id: int
 
     class Config:
         orm_mode = True
