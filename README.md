@@ -1,8 +1,8 @@
 # NIT Srinagar Billing System (Backend)
 
-## Setup
+## Setup the app
 
-### Clone Repository
+### Clone the repository
 
 #### HTTPS
 ```bash
@@ -24,7 +24,7 @@ cd billing_backend
 python3 -m venv venv
 ```
 
-### Activate virtual environment
+### Activate the virtual environment
 
 #### Unix
 ```bash
@@ -41,7 +41,36 @@ venv\Scripts\activate.bat
 pip install -r requirements.txt
 ```
 
+### Initialize the app
+```bash
+python3 init.py
+```
+
+## Deactivate the virtual environment
+```bash
+deactivate
+```
+
+## Run the app
+
+### Activate the virtual environment
+
+#### Unix
+```bash
+source venv/bin/activate
+```
+
+#### Windows
+```bash
+venv\Scripts\activate.bat
+```
+
 ## Start the application
 ```bash
 uvicorn main:app --reload
+```
+
+## Deactivate the virtual environment
+```bash
+deactivate
 ```
