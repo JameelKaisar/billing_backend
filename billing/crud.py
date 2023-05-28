@@ -261,6 +261,97 @@ def create_room_creation(db: Session, room_creation: schemas.RoomCreationCreate)
 #         db.refresh(db_flat_rate_to_room)
 #     return db_rooms
 
+def get_room_creation_metered(db: Session, room_id: int):
+    try:
+        db_rooms = db.query(models.Room).filter(models.Room.room_id == room_id).first()
+        db_meter_to_room = db.query(models.MeterToRoom).filter(models.MeterToRoom.room_id == room_id).first()
+        db_meter = db.query(models.Meter).filter(models.Meter.meter_id == db_meter_to_room.meter_id).first()
+        db_meter_rate_to_room = db.query(models.MeterRateToRoom).filter(models.MeterRateToRoom.room_id == room_id).first()
+        db_meter_rate = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == db_meter_rate_to_room.meter_rate_id).first()
+        # db_meter_rate_type = db.query(models.MeterRateType).filter(models.MeterRateType.meter_rate_type_id == db_meter_rate.meter_rate_type_id).first()
+        return {
+            "room_id": db_rooms.room_id,
+            "quarter_type_id": db_rooms.quarter_type_id,
+            "quarter_type_name": db_rooms.quarter_type.quarter_name,
+            "room_number": db_rooms.room_number,
+            "is_metered": db_rooms.is_metered,
+            "initial_reading": db_meter.initial_reading,
+            # "meter_rate_id": db_meter_rate_to_room.meter_rate_id,
+            "meter_rate_name": db_meter_rate.meter_rate_name,
+        }
+    except Exception as e:
+        return None
+
+# def get_room_creations_metered(db: Session, skip: int = 0, limit: int = 100):
+#     try:
+#         db_rooms = db.query(models.Room).filter(models.Room.is_metered == True).offset(skip).limit(limit).all()
+#         return db_rooms
+#     except Exception as e:
+#         return None
+def get_room_creations_metered(db: Session, skip: int = 0, limit: int = 100):
+    try:
+        db_rooms = db.query(models.Room).filter(models.Room.is_metered == True).offset(skip).limit(limit).all()
+
+        room_details = []
+        for room in db_rooms:
+            db_meter_to_room = db.query(models.MeterToRoom).filter(models.MeterToRoom.room_id == room.room_id).first()
+            db_meter = db.query(models.Meter).filter(models.Meter.meter_id == db_meter_to_room.meter_id).first()
+            db_meter_rate_to_room = db.query(models.MeterRateToRoom).filter(models.MeterRateToRoom.room_id == room.room_id).first()
+            db_meter_rate = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == db_meter_rate_to_room.meter_rate_id).first()
+
+            room_details.append({
+                "room_id": room.room_id,
+                "quarter_type_id": room.quarter_type_id,
+                "quarter_type_name": room.quarter_type.quarter_name,
+                "room_number": room.room_number,
+                "is_metered": room.is_metered,
+                "initial_reading": db_meter.initial_reading,
+                "meter_rate_name": db_meter_rate.meter_rate_name,
+            })
+
+        return room_details
+    except Exception as e:
+        return None
+
+
+def get_room_creation_unmetered(db: Session, room_id: int):
+    try:
+        db_rooms = db.query(models.Room).filter(models.Room.room_id == room_id).first()
+        db_flat_rate_to_room = db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.room_id == room_id).first()
+        db_flat_rate = db.query(models.FlatRate).filter(models.FlatRate.flat_rate_id == db_flat_rate_to_room.flat_rate_id).first()
+        return {
+            "room_id": db_rooms.room_id,
+            "quarter_type_id": db_rooms.quarter_type_id,
+            "quarter_type_name": db_rooms.quarter_type.quarter_name,
+            "room_number": db_rooms.room_number,
+            "is_metered": db_rooms.is_metered,
+            "flat_rate_name": db_flat_rate.flat_rate_name,
+        }
+    except Exception as e:
+        return None
+
+def get_room_creations_unmetered(db: Session, skip: int = 0, limit: int = 100):
+    try:
+        db_rooms = db.query(models.Room).filter(models.Room.is_metered == False).offset(skip).limit(limit).all()
+
+        room_details = []
+        for room in db_rooms:
+            db_flat_rate_to_room = db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.room_id == room.room_id).first()
+            db_flat_rate = db.query(models.FlatRate).filter(models.FlatRate.flat_rate_id == db_flat_rate_to_room.flat_rate_id).first()
+
+            room_details.append({
+                "room_id": room.room_id,
+                "quarter_type_id": room.quarter_type_id,
+                "quarter_type_name": room.quarter_type.quarter_name,
+                "room_number": room.room_number,
+                "is_metered": room.is_metered,
+                "flat_rate_name": db_flat_rate.flat_rate_name,
+            })
+
+        return room_details
+    except Exception as e:
+        return None
+
 def delete_room_creation(db: Session, room_creation: schemas.RoomCreationDelete):
     room_id = room_creation.room_id
     db_rooms = db.query(models.Room).filter(models.Room.room_id == room_id).first()
