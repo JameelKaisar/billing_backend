@@ -8,8 +8,10 @@ class User(Base):
     __tablename__ = "users"
 
     user_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    # email = Column(String, nullable=False, unique=True)
-    user_name= Column(String, nullable=False)
+    username = Column(String, nullable=False, unique=True) # email
+    hashed_password = Column(String)
+    full_name = Column(String)
+    disabled = Column(Boolean, nullable=False, default=False)
 
 
 class Meter(Base):

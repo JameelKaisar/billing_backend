@@ -3,35 +3,37 @@ from sqlalchemy import func
 
 from billing import models, schemas
 
-#user
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.user_id == user_id).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.User).offset(skip).limit(limit).all()
 
-def create_users(db: Session, user: schemas.UserCreate):
-    db_user = models.User(**user.dict())
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+# user
+# def get_user(db: Session, user_id: int):
+#     return db.query(models.User).filter(models.User.user_id == user_id).first()
 
-def update_user(db: Session, user: schemas.UserUpdate):
-    user_id = user.user_id
-    user_name = user.user_name
-    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    db_user.user_name = user_name
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+# def get_users(db: Session, skip: int = 0, limit: int = 100):
+#     return db.query(models.User).offset(skip).limit(limit).all()
 
-def delete_user(db: Session, user: schemas.UserDelete):
-    user_id = user.user_id
-    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    db.delete(db_user)
-    db.commit()
-    return db_user
+# def create_users(db: Session, user: schemas.UserCreate):
+#     db_user = models.User(**user.dict())
+#     db.add(db_user)
+#     db.commit()
+#     db.refresh(db_user)
+#     return db_user
+
+# def update_user(db: Session, user: schemas.UserUpdate):
+#     user_id = user.user_id
+#     user_name = user.user_name
+#     db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+#     db_user.user_name = user_name
+#     db.commit()
+#     db.refresh(db_user)
+#     return db_user
+
+# def delete_user(db: Session, user: schemas.UserDelete):
+#     user_id = user.user_id
+#     db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+#     db.delete(db_user)
+#     db.commit()
+#     return db_user
 
 # meter
 def get_meter(db: Session, meter_id: int):
