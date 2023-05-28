@@ -28,6 +28,33 @@ class UserInDB(UserBase):
     hashed_password: str
 
 
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    full_name: str | None = None
+    disabled: bool = False
+
+    class Config:
+        orm_mode = True
+
+
+class UserRead(BaseModel):
+    user_id: int
+    username: str
+    full_name: str | None = None
+    disabled: bool = False
+
+    class Config:
+        orm_mode = True
+
+
+class UserDelete(BaseModel):
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
+
 # user
 # class UserBase(BaseModel):
 #     user_id: int

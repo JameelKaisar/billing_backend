@@ -67,21 +67,21 @@ async def read_own_items(current_user: schemas.UserBase = Depends(get_current_ac
 
 
 # user
-# @app.post("/user/", response_model=schemas.UserRead)
-# def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-#     return crud.create_users(db=db, user=user)
+@app.post("/user/", response_model=schemas.UserBase)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_users(db=db, user=user)
 
-# @app.get("/user/", response_model=schemas.UserRead)
-# def read_user(user_id: int, db: Session = Depends(get_db)):
-#     user = crud.get_user(db, user_id)
-#     if not user:
-#         raise HTTPException(status_code=400, detail="User not found")
-#     return user
+@app.get("/user/", response_model=schemas.UserRead)
+def read_user(user_id: int, db: Session = Depends(get_db)):
+    user = crud.get_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+    return user
 
-# @app.get("/users/", response_model=list[schemas.UserRead])
-# def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     users = crud.get_users(db, skip=skip, limit=limit)
-#     return users
+@app.get("/users/", response_model=list[schemas.UserRead])
+def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = crud.get_users(db, skip=skip, limit=limit)
+    return users
 
 # @app.put("/user/", response_model=schemas.UserRead)
 # def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
@@ -90,12 +90,12 @@ async def read_own_items(current_user: schemas.UserBase = Depends(get_current_ac
 #         raise HTTPException(status_code=400, detail="User not found")
 #     return crud.update_user(db, user)
 
-# @app.delete("/user/", response_model=schemas.UserRead)
-# def delete_user(user: schemas.UserDelete, db: Session = Depends(get_db)):
-#     usr = crud.get_user(db, user.user_id)
-#     if not usr:
-#         raise HTTPException(status_code=400, detail="User not found")
-#     return crud.delete_user(db, user)
+@app.delete("/user/", response_model=schemas.UserRead)
+def delete_user(user: schemas.UserDelete, db: Session = Depends(get_db)):
+    usr = crud.get_user(db, user.user_id)
+    if not usr:
+        raise HTTPException(status_code=400, detail="User not found")
+    return crud.delete_user(db, user)
 
 
 # meter
