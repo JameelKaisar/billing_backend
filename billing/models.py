@@ -88,6 +88,15 @@ class MeterRate(Base):
     meter_rate_upto = Column(Integer, nullable=False)
     meter_rate_value = Column(Integer, nullable=False)
 
+class MeterRateToRoom(Base):
+    __tablename__ = "meter_rate_to_room"
+
+    meter_rate_to_room_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    meter_rate_id = Column(Integer, ForeignKey("meter_rates.meter_rate_id"), nullable=False)
+    room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False, unique=True)
+
+    # meter_rate = relationship("MeterRate", back_populates="meter_rate_to_room")
+    # room = relationship("Room", back_populates="meter_rate_to_room")
 
 class Reading(Base):
     __tablename__ = "readings"

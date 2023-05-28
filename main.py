@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, not_, func
+from typing import Dict
 
 from billing import crud, models, schemas
 from billing.models import QuarterType, Room, User, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading
@@ -283,31 +284,44 @@ def delete_meter_to_room(meter_to_room: schemas.MeterToRoomDelete, db: Session =
 # room_creation
 @app.post("/room_creation/", response_model=schemas.RoomCreationRead)
 def create_room_creation(room_creation: schemas.RoomCreationCreate, db: Session = Depends(get_db)):
-    if True:
+    try:
         quarter_type = db.query(QuarterType).filter(QuarterType.quarter_id == room_creation.quarter_type_id).first()
         if not quarter_type:
             raise HTTPException(status_code=400, detail="Quarter type does not exist")
+        if room_creation.is_metered:
+            mtr_rate = db.query(MeterRate).filter(MeterRate.meter_rate_id == room_creation.meter_rate_id).first()
+            if not mtr_rate:
+                raise HTTPException(status_code=400, detail="Meter rate does not exist")
+        else: 
+            flat_rate = db.query(FlatRate).filter(FlatRate.flat_rate_id == room_creation.flat_rate_id).first()
+            if not flat_rate:
+                raise HTTPException(status_code=400, detail="Flat rate does not exist")
         existing_room = db.query(Room).filter(Room.quarter_type_id == room_creation.quarter_type_id,Room.room_number == room_creation.room_number).first()
         if not existing_room:
-             return crud.create_room_creation(db=db, room_creation=room_creation)
+            return crud.create_room_creation(db=db, room_creation=room_creation)
         else:
-            raise HTTPException(status_code=400, detail="Room already exists")
-       
-    # except:
-    #     raise HTTPException(status_code=400, detail="Room creation failed")
+            raise HTTPException(status_code=400, detail="Room already exists")   
+    except:
+        raise HTTPException(status_code=400, detail="Room creation failed")
+
+# @app.put("/room_creation/", response_model=schemas.RoomCreationRead)
+# def update_room_creation(room_creation: schemas.RoomCreationUpdate, db: Session = Depends(get_db)):
+#     room_creation = crud.get_room_creation(db, room_creation.room_creation_id)
+#     if not room_creation:
+#         raise HTTPException(status_code=400, detail="Room not found")
+#     try:
+#         return crud.update_room_creation(db, room_creation)
+#     except:
+#         raise HTTPException(status_code=400, detail="Room creation already exists")
     
-@app.get("/room_creation/", response_model=schemas.RoomCreationRead)
-def read_room_creation(room_creation_id: int, db: Session = Depends(get_db)):
-    room_creation = crud.get_room_creation(db, room_creation_id)
-    if not room_creation:
-        raise HTTPException(status_code=400, detail="Room creation not found")
+@app.delete("/room_creation/", response_model=Dict[str, str])
+def delete_room_creation(room_creation: schemas.RoomCreationDelete, db: Session = Depends(get_db)):
+    room_id = room_creation.room_id
+    room_exists = db.query(Room).filter(Room.room_id == room_id).first()
+    if not room_exists:
+        raise HTTPException(status_code=400, detail="Room not found")
+    crud.delete_room_creation(db, room_creation)
     return room_creation
-
-@app.get("/rooms_creation/", response_model=list[schemas.RoomCreationRead])
-
-def get_room_creations(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    room_creations = crud.get_room_creations(db, skip=skip, limit=limit)
-    return room_creations
 
 # flat_rate
 @app.post("/flat_rate/", response_model=schemas.FlatRateRead)
@@ -317,27 +331,16 @@ def create_flat_rate(flat_rate: schemas.FlatRateCreate, db: Session = Depends(ge
     except:
         raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
 
-@app.get("/flat_rate/", response_model=schemas.FlatRateRead)
-def read_flat_rate(flat_rate_id: int, db: Session = Depends(get_db)):
-    flat_rate = crud.get_flat_rate(db, flat_rate_id)
-    if not flat_rate:
-        raise HTTPException(status_code=400, detail="Flat Rate not found")
-    return flat_rate
 
-@app.get("/flat_rates/", response_model=list[schemas.FlatRateRead])
-def get_flat_rates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    flat_rates = crud.get_flat_rates(db, skip=skip, limit=limit)
-    return flat_rates
-
-@app.put("/flat_rate/", response_model=schemas.FlatRateRead)
-def update_flat_rate(flat_rate: schemas.FlatRateUpdate, db: Session = Depends(get_db)):
-    fr = crud.get_flat_rate(db, flat_rate.flat_rate_id)
-    if not fr:
-        raise HTTPException(status_code=400, detail="Flat Rate not found")
-    try:
-        return crud.update_flat_rate(db, flat_rate)
-    except:
-        raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
+# @app.put("/flat_rate/", response_model=schemas.FlatRateRead)
+# def update_flat_rate(flat_rate: schemas.FlatRateUpdate, db: Session = Depends(get_db)):
+#     fr = crud.get_flat_rate(db, flat_rate.flat_rate_id)
+#     if not fr:
+#         raise HTTPException(status_code=400, detail="Flat Rate not found")
+#     try:
+#         return crud.update_flat_rate(db, flat_rate)
+#     except:
+#         raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
 
 @app.delete("/flat_rate/", response_model=schemas.FlatRateRead)
 def delete_flat_rate(flat_rate: schemas.FlatRateDelete, db: Session = Depends(get_db)):
@@ -448,6 +451,63 @@ def delete_flat_rate_to_room(flat_rate_to_room: schemas.FlatRateToRoomDelete, db
         raise HTTPException(status_code=400, detail="Flat Rate to Room not found")
     crud.delete_flat_rate_to_room(db, flat_rate_to_room)
     return flat_rate_to_room
+
+# meter rate to room
+@app.post("/meter_rate_to_room/", response_model=schemas.MeterRateToRoomRead)
+def create_meter_rate_to_room(meter_rate_to_room: schemas.MeterRateToRoomCreate, db: Session = Depends(get_db)):
+    room_exists = crud.get_room(db, meter_rate_to_room.room_id)
+    if not room_exists:
+        raise HTTPException(status_code=400, detail="Room not found")
+    meter_rate_exists = crud.get_meter_rate(db, meter_rate_to_room.meter_rate_id)
+    if not meter_rate_exists:
+        raise HTTPException(status_code=400, detail="Meter Rate not found")
+    room = db.query(Room).filter(Room.room_id == meter_rate_to_room.room_id).first()
+    if not room.is_metered:
+        raise HTTPException(status_code=400, detail="Room is not metered")
+    try:
+        return crud.create_meter_rate_to_room(db=db, meter_rate_to_room=meter_rate_to_room)
+    except:
+        raise HTTPException(status_code=400, detail="Meter Rate to Room already exists")
+    
+@app.get("/meter_rate_to_room/", response_model=schemas.MeterRateToRoomRead)
+def read_meter_rate_to_room(meter_rate_to_room_id: int, db: Session = Depends(get_db)):
+    meter_rate_to_room = crud.get_meter_rate_to_room(db, meter_rate_to_room_id)
+    if not meter_rate_to_room:
+        raise HTTPException(status_code=400, detail="Meter Rate to Room not found")
+    return meter_rate_to_room
+
+@app.get("/meter_rate_to_rooms/", response_model=list[schemas.MeterRateToRoomRead])
+def get_meter_rate_to_rooms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    meter_rate_to_rooms = crud.get_meter_rate_to_rooms(db, skip=skip, limit=limit)
+    return meter_rate_to_rooms
+
+@app.put("/meter_rate_to_room/", response_model=schemas.MeterRateToRoomRead)
+def update_meter_rate_to_room(meter_rate_to_room: schemas.MeterRateToRoomUpdate, db: Session = Depends(get_db)):
+    mr_to_room = crud.get_meter_rate_to_room(db, meter_rate_to_room.meter_rate_to_room_id)
+    if not mr_to_room:
+        raise HTTPException(status_code=400, detail="Meter Rate to Room not found")
+    room_exists = crud.get_room(db, meter_rate_to_room.room_id)
+    if not room_exists:
+        raise HTTPException(status_code=400, detail="Room not found")
+    meter_rate_exists = crud.get_meter_rate(db, meter_rate_to_room.meter_rate_id)
+    if not meter_rate_exists:
+        raise HTTPException(status_code=400, detail="Meter Rate not found")
+    room = db.query(Room).filter(Room.room_id == meter_rate_to_room.room_id).first()
+    if not room.is_metered:
+        raise HTTPException(status_code=400, detail="Room is not metered")
+    try:
+        return crud.update_meter_rate_to_room(db, meter_rate_to_room)
+    except:
+        raise HTTPException(status_code=400, detail="Meter Rate to Room already exists")
+    
+@app.delete("/meter_rate_to_room/", response_model=schemas.MeterRateToRoomRead)
+def delete_meter_rate_to_room(meter_rate_to_room: schemas.MeterRateToRoomDelete, db: Session = Depends(get_db)):
+    meter_rate_to_room = crud.get_meter_rate_to_room(db, meter_rate_to_room.meter_rate_to_room_id)
+    if not meter_rate_to_room:
+        raise HTTPException(status_code=400, detail="Meter Rate to Room not found")
+    crud.delete_meter_rate_to_room(db, meter_rate_to_room)
+    return meter_rate_to_room
+
 
 # reading
 # not let user enter reading if it is from previous month -> year <= y & month < m

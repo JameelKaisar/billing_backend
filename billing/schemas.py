@@ -146,7 +146,7 @@ class RoomCreationCreate(RoomCreationBase):
     flat_rate_id: Optional[int]
     
 
-class RoomCreationRead(RoomCreationCreate):
+class RoomCreationRead(RoomCreationBase):
     room_id: int
 
 
@@ -197,7 +197,7 @@ class FlatRateToRoomCreate(BaseModel):
     class Config:
         orm_mode = True
 
-class FlatRateToRoomRead(FlatRateToRoomBase):
+class FlatRateToRoomRead(FlatRateToRoomCreate):
     pass
 
 class FlatRateToRoomUpdate(FlatRateToRoomBase):
@@ -234,6 +234,29 @@ class MeterRateUpdate(MeterRateRead):
 
 class MeterRateDelete(MeterRateBase):
     pass
+
+# Meter Rate To Room
+class MeterRateToRoomBase(BaseModel):
+    meter_rate_to_room_id: int
+    class Config:
+        orm_mode = True
+
+class MeterRateToRoomCreate(BaseModel):
+    meter_rate_id: int
+    room_id: int
+    class Config:
+        orm_mode = True
+
+class MeterRateToRoomRead(MeterRateToRoomCreate):
+    pass
+
+class MeterRateToRoomUpdate(MeterRateToRoomBase):
+    meter_rate_id: int
+    room_id: int
+
+class MeterRateToRoomDelete(MeterRateToRoomBase):
+    pass
+
 
 # Reading
 class ReadingBase(BaseModel):
