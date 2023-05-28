@@ -313,14 +313,29 @@ def create_room_creation(room_creation: schemas.RoomCreationCreate, db: Session 
 #         return crud.update_room_creation(db, room_creation)
 #     except:
 #         raise HTTPException(status_code=400, detail="Room creation already exists")
-@app.get("/room_creation_metered/", response_model=schemas.RoomCreationRead)
+@app.get("/room_creation_metered/", response_model=schemas.RoomCreationReadMetered)
 def read_room_creation_metered(room_creation_id: int, db: Session = Depends(get_db)):
     room_creation = crud.get_room_creation_metered(db, room_creation_id)
     if not room_creation:
-        raise HTTPException(status_code=400, detail="Room not found")
-    if not room_creation.is_metered:
-        raise HTTPException(status_code=400, detail="Room is not metered")
+        raise HTTPException(status_code=400, detail="Metered Room not found")
     return room_creation
+
+@app.get("/room_creations_metered/", response_model=list[schemas.RoomCreationReadMetered])
+def read_room_creations_metered(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    room_creations = crud.get_room_creations_metered(db, skip=skip, limit=limit)
+    return room_creations
+
+@app.get("/room_creation_unmetered/", response_model=schemas.RoomCreationReadUnmetered)
+def read_room_creation_unmetered(room_creation_id: int, db: Session = Depends(get_db)):
+    room_creation = crud.get_room_creation_unmetered(db, room_creation_id)
+    if not room_creation:
+        raise HTTPException(status_code=400, detail="Unmetered Room not found")
+    return room_creation
+
+@app.get("/room_creations_unmetered/", response_model=list[schemas.RoomCreationReadUnmetered])
+def read_room_creations_unmetered(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    room_creations = crud.get_room_creations_unmetered(db, skip=skip, limit=limit)
+    return room_creations
 
 @app.delete("/room_creation/", response_model=Dict[str, str])
 def delete_room_creation(room_creation: schemas.RoomCreationDelete, db: Session = Depends(get_db)):

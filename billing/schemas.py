@@ -160,12 +160,12 @@ class RoomCreationDelete(BaseModel):
         orm_mode = True
 class RoomCreationReadMetered(RoomCreationBase):
     quarter_type_name: str
-    meter_id : int
+    # meter_id : int
     initial_reading: int
     meter_rate_name: str
     
-class RoomCreationReadUnmetered(RoomCreationReadMetered):
-    flat_rate_id: int
+class RoomCreationReadUnmetered(RoomCreationBase):
+    flat_rate_name: str
 
 # Flat Rate
 class FlatRateBase(BaseModel):
