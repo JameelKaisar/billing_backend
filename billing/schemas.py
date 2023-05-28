@@ -1,25 +1,78 @@
 from pydantic import BaseModel
 from typing import Optional
 
-#user
 
+
+# auth
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+# user
 class UserBase(BaseModel):
-    user_id: int
-    class Config:
-        orm_mode = True
-    
-class UserCreate(BaseModel):
-    user_name: str
-    class Config:
-        orm_mode = True
-class UserRead(UserBase):
-    user_name: str
+    username: str
+    full_name: str | None = None
+    disabled: bool
 
-class UserUpdate(UserBase):
-    user_name: str
+    class Config:
+        orm_mode = True
+
+
+class UserInDB(UserBase):
+    user_id: int
+    hashed_password: str
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    full_name: str | None = None
+    disabled: bool = False
+
+    class Config:
+        orm_mode = True
+
+
+class UserRead(BaseModel):
+    user_id: int
+    username: str
+    full_name: str | None = None
+    disabled: bool = False
+
+    class Config:
+        orm_mode = True
+
+
+class UserDelete(BaseModel):
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
+
+# user
+# class UserBase(BaseModel):
+#     user_id: int
+#     class Config:
+#         orm_mode = True
     
-class UserDelete(UserBase):
-    pass
+# class UserCreate(BaseModel):
+#     user_name: str
+#     class Config:
+#         orm_mode = True
+# class UserRead(UserBase):
+#     user_name: str
+
+# class UserUpdate(UserBase):
+#     user_name: str
+    
+# class UserDelete(UserBase):
+#     pass
 
 # meter
 class MeterBase(BaseModel):

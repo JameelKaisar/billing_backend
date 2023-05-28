@@ -2,29 +2,38 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from billing import models, schemas
+from billing.auth import get_password_hash
 
-#user
+
+
+# user
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.user_id == user_id).first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
+# handle existing username (like init.py)
 def create_users(db: Session, user: schemas.UserCreate):
-    db_user = models.User(**user.dict())
+    username = user.username
+    password = user.password
+    hashed_password = get_password_hash(password)
+    full_name = user.full_name
+    disabled = user.disabled
+    db_user = models.User(username=username, hashed_password=hashed_password, full_name=full_name, disabled=disabled)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
 
-def update_user(db: Session, user: schemas.UserUpdate):
-    user_id = user.user_id
-    user_name = user.user_name
-    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    db_user.user_name = user_name
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+# def update_user(db: Session, user: schemas.UserUpdate):
+#     user_id = user.user_id
+#     user_name = user.user_name
+#     db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+#     db_user.user_name = user_name
+#     db.commit()
+#     db.refresh(db_user)
+#     return db_user
 
 def delete_user(db: Session, user: schemas.UserDelete):
     user_id = user.user_id

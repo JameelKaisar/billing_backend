@@ -1,16 +1,26 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, not_, func
+from sqlalchemy import func, and_, or_, not_
+from datetime import timedelta
 from typing import Dict
 
-from billing import crud, models, schemas
-from billing.models import QuarterType, Room, User, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading
-from billing.database import SessionLocal, engine
+from billing import crud, schemas
+from billing.common import get_db
+from billing.database import engine
+from billing.const import ACCESS_TOKEN_EXPIRE_MINUTES
+from billing.auth import get_current_active_user, authenticate_user, create_access_token
+from billing.models import Base, User, QuarterType, Room, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading
 
-models.Base.metadata.create_all(bind=engine)
+
+
+Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,20 +30,44 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
+
+# test
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
-#user
-@app.post("/user/", response_model=schemas.UserRead)
+
+# auth
+@app.post("/token", response_model=schemas.Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+# user
+@app.get("/users/me/", response_model=schemas.UserBase)
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
+    return current_user
+
+
+@app.get("/users/me/items/")
+async def read_own_items(current_user: schemas.UserBase = Depends(get_current_active_user)):
+    return [{"item_id": "Foo", "owner": current_user.username}]
+
+
+# user
+@app.post("/user/", response_model=schemas.UserBase)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_users(db=db, user=user)
 
@@ -49,12 +83,12 @@ def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = crud.get_users(db, skip=skip, limit=limit)
     return users
 
-@app.put("/user/", response_model=schemas.UserRead)
-def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
-    usr = crud.get_user(db, user.user_id)
-    if not usr:
-        raise HTTPException(status_code=400, detail="User not found")
-    return crud.update_user(db, user)
+# @app.put("/user/", response_model=schemas.UserRead)
+# def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db)):
+#     usr = crud.get_user(db, user.user_id)
+#     if not usr:
+#         raise HTTPException(status_code=400, detail="User not found")
+#     return crud.update_user(db, user)
 
 @app.delete("/user/", response_model=schemas.UserRead)
 def delete_user(user: schemas.UserDelete, db: Session = Depends(get_db)):
@@ -62,6 +96,7 @@ def delete_user(user: schemas.UserDelete, db: Session = Depends(get_db)):
     if not usr:
         raise HTTPException(status_code=400, detail="User not found")
     return crud.delete_user(db, user)
+
 
 # meter
 @app.post("/meter/", response_model=schemas.MeterRead)
@@ -94,6 +129,7 @@ def delete_meter(meter: schemas.MeterDelete, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Meter not found")
     crud.delete_meter(db, meter)
     return meter
+
 
 # quarter_type
 @app.post("/quarter_type/", response_model=schemas.QuarterTypeRead)
