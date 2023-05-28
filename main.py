@@ -313,7 +313,15 @@ def create_room_creation(room_creation: schemas.RoomCreationCreate, db: Session 
 #         return crud.update_room_creation(db, room_creation)
 #     except:
 #         raise HTTPException(status_code=400, detail="Room creation already exists")
-    
+@app.get("/room_creation_metered/", response_model=schemas.RoomCreationRead)
+def read_room_creation_metered(room_creation_id: int, db: Session = Depends(get_db)):
+    room_creation = crud.get_room_creation_metered(db, room_creation_id)
+    if not room_creation:
+        raise HTTPException(status_code=400, detail="Room not found")
+    if not room_creation.is_metered:
+        raise HTTPException(status_code=400, detail="Room is not metered")
+    return room_creation
+
 @app.delete("/room_creation/", response_model=Dict[str, str])
 def delete_room_creation(room_creation: schemas.RoomCreationDelete, db: Session = Depends(get_db)):
     room_id = room_creation.room_id
