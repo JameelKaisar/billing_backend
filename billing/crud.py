@@ -200,53 +200,92 @@ def delete_meter_to_room(db: Session, meter_to_room: schemas.MeterToRoomDelete):
 
 # Room Creation
 def create_room_creation(db: Session, room_creation: schemas.RoomCreationCreate):
-    if True:
-        quarter_type_id = room_creation.quarter_type_id
-        room_number = room_creation.room_number
-        is_metered = room_creation.is_metered
-        db_rooms = models.Room(quarter_type_id=quarter_type_id, room_number=room_number, is_metered=is_metered)
-        db.add(db_rooms)
+    quarter_type_id = room_creation.quarter_type_id
+    room_number = room_creation.room_number
+    is_metered = room_creation.is_metered
+    db_rooms = models.Room(quarter_type_id=quarter_type_id, room_number=room_number, is_metered=is_metered)
+    db.add(db_rooms)
+    db.flush()
+    room_id = db_rooms.room_id
+    if is_metered:
+        initial_reading = room_creation.initial_reading
+        meter_rate_id = room_creation.meter_rate_id
+        db_meter = models.Meter(initial_reading=initial_reading)
+        db.add(db_meter)
         db.flush()
-
-        room_id = db_rooms.room_id
-        
-        
-        if is_metered:
-            initial_reading = room_creation.initial_reading
-            meter_rate_id = room_creation.meter_rate_id
-            db_meter = models.Meter(initial_reading=initial_reading)
-            db.add(db_meter)
-            db.flush()
-            meter_id=db_meter.meter_id
-            
-
-            db_meter_to_room = models.MeterToRoom(meter_id=meter_id, room_id=db_rooms.room_id)
-            db.add(db_meter_to_room)
-            
-        elif not is_metered:
-            flat_rate_id = room_creation.flat_rate_id
-            db_flat_rate_to_room = models.FlatRateToRoom(flat_rate_id=flat_rate_id, room_id=room_id)
-            db.add(db_flat_rate_to_room)
-           
-        db.commit() 
-        db.refresh(db_rooms)
+        meter_id=db_meter.meter_id
+        db_meter_to_room = models.MeterToRoom(meter_id=meter_id, room_id=db_rooms.room_id)
+        db.add(db_meter_to_room)
+        db_meter_rate_to_room = models.MeterRateToRoom(meter_rate_id=meter_rate_id, room_id=room_id)
+        db.add(db_meter_rate_to_room)
+    elif not is_metered:
+        flat_rate_id = room_creation.flat_rate_id
+        db_flat_rate_to_room = models.FlatRateToRoom(flat_rate_id=flat_rate_id, room_id=room_id)
+        db.add(db_flat_rate_to_room)    
+    db.commit() 
+    db.refresh(db_rooms)
+    if is_metered:
         db.refresh(db_meter)
-        if is_metered:
-            db.refresh(db_meter_to_room)
-        else:
-            db.refresh(db_flat_rate_to_room)
-        return db_rooms
+        db.refresh(db_meter_to_room)
+        db.refresh(db_meter_rate_to_room)
+    else:
+        db.refresh(db_flat_rate_to_room)
+    return db_rooms
 
-    # except:
-    #     raise HTTPException(status_code=404, detail="Room Creation Failed")
+# def update_room_creation(db: Session, room_creation: schemas.RoomCreationUpdate):
+#     room_id = room_creation.room_id
+#     quarter_type_id = room_creation.quarter_type_id
+#     room_number = room_creation.room_number
+#     is_metered = room_creation.is_metered
+#     db_rooms = db.query(models.Room).filter(models.Room.room_id == room_id).first()
+#     db_rooms.quarter_type_id = quarter_type_id
+#     db_rooms.room_number = room_number
+#     db_rooms.is_metered = is_metered
+#     db.commit()
+#     db.refresh(db_rooms)
+#     if is_metered:
+#         initial_reading = room_creation.initial_reading
+#         meter_rate_id = room_creation.meter_rate_id
+#         db_meter = db.query(models.Meter).filter(models.Meter.meter_id == db_rooms.meter_to_room[0].meter_id).first()
+#         db_meter.initial_reading = initial_reading
+#         db_meter_rate_to_room = db.query(models.MeterRateToRoom).filter(models.MeterRateToRoom.room_id == room_id).first()
+#         db_meter_rate_to_room.meter_rate_id = meter_rate_id
+#         db.commit()
+#         db.refresh(db_meter)
+#         db.refresh(db_meter_rate_to_room)
+#     else:
+#         flat_rate_id = room_creation.flat_rate_id
+#         db_flat_rate_to_room = db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.room_id == room_id).first()
+#         db_flat_rate_to_room.flat_rate_id = flat_rate_id
+#         db.commit()
+#         db.refresh(db_flat_rate_to_room)
+#     return db_rooms
 
-def get_room_creation(db: Session, room_creation_id: int):
-    return db.query(models.Room).filter(models.Room.room_id == room_creation_id).first()
-
-def get_room_creations(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Room).offset(skip).limit(limit).all()
-
-
+def delete_room_creation(db: Session, room_creation: schemas.RoomCreationDelete):
+    room_id = room_creation.room_id
+    db_rooms = db.query(models.Room).filter(models.Room.room_id == room_id).first()
+    is_metered = db_rooms.is_metered
+    if is_metered:
+        db_meter_to_room = db.query(models.MeterToRoom).filter(models.MeterToRoom.room_id == room_id).first()
+        if db_meter_to_room:
+            meter_id = db_meter_to_room.meter_id
+            db_meter_rate_to_room = (
+                db.query(models.MeterRateToRoom)
+                .filter(models.MeterRateToRoom.room_id == room_id)
+                .first()
+            )
+            db_meter = db.query(models.Meter).filter(models.Meter.meter_id == meter_id).first()
+            if db_meter_rate_to_room and db_meter:
+                db.delete(db_meter_rate_to_room)
+                db.delete(db_meter_to_room)
+                db.delete(db_meter)
+    else:
+        db_flat_rate_to_room = db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.room_id == room_id).first()
+        if db_flat_rate_to_room:
+            db.delete(db_flat_rate_to_room)
+    db.delete(db_rooms)
+    db.commit()
+    return {"message": "Room deletion successful"}
 
 #flat rate
 def get_flat_rate(db: Session, flat_rate_id: int):
@@ -352,6 +391,34 @@ def delete_flat_rate_to_room(db: Session, flat_rate_to_room: schemas.FlatRateToR
     db.delete(db_flat_rate_to_room)
     db.commit()
     return db_flat_rate_to_room
+
+# meter_rate_to_room
+def get_meter_rate_to_room(db: Session, meter_rate_to_room_id: int):
+    return db.query(models.MeterRateToRoom).filter(models.MeterRateToRoom.meter_rate_to_room_id == meter_rate_to_room_id).first()
+
+def get_meter_rate_to_rooms(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.MeterRateToRoom).offset(skip).limit(limit).all()
+
+def create_meter_rate_to_room(db: Session, meter_rate_to_room: schemas.MeterRateToRoomCreate):
+    meter_rate_id = meter_rate_to_room.meter_rate_id
+    room_id = meter_rate_to_room.room_id
+    db_meter_rate_to_room = models.MeterRateToRoom(meter_rate_id=meter_rate_id, room_id=room_id)
+    db.add(db_meter_rate_to_room)
+    db.commit()
+    db.refresh(db_meter_rate_to_room)
+    return db_meter_rate_to_room
+
+def update_meter_rate_to_room(db: Session, meter_rate_to_room: schemas.MeterRateToRoomUpdate):
+    meter_rate_to_room_id = meter_rate_to_room.meter_rate_to_room_id
+    meter_rate_id = meter_rate_to_room.meter_rate_id
+    room_id = meter_rate_to_room.room_id
+    db_meter_rate_to_room = db.query(models.MeterRateToRoom).filter(models.MeterRateToRoom.meter_rate_to_room_id == meter_rate_to_room_id).first()
+    db_meter_rate_to_room.meter_rate_id = meter_rate_id
+    db_meter_rate_to_room.room_id = room_id
+    db.commit()
+    db.refresh(db_meter_rate_to_room)
+    return db_meter_rate_to_room
+
 
 # reading
 def get_reading(db: Session, reading_id: int):
