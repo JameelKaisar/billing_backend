@@ -513,10 +513,50 @@ def update_meter_rate_to_room(db: Session, meter_rate_to_room: schemas.MeterRate
 
 # reading
 def get_reading(db: Session, reading_id: int):
-    return db.query(models.Reading).filter(models.Reading.reading_id == reading_id).first()
+    reading = db.query(models.Reading).filter(models.Reading.reading_id == reading_id).first()
+    room_id = db.query(models.MeterToRoom.room_id).filter(models.MeterToRoom.meter_id == reading.meter_id).scalar()
+    room_number = db.query(models.Room.room_number).filter(models.Room.room_id == room_id)
+    quarter_id = db.query(models.Room.quarter_type_id).filter(models.Room.room_id == room_id)
+    quarter_name = db.query(models.QuarterType.quarter_name).filter(models.QuarterType.quarter_id == quarter_id).scalar()
+    return {
+        "reading_id": reading.reading_id,
+        "meter_id": reading.meter_id,
+        "room_id": room_id,
+        "room_number": room_number.scalar(),
+        "quarter_type": quarter_name,
+        "month": reading.month,
+        "year": reading.year,
+        "locked": reading.locked,
+        "units_consumed": reading.units_consumed,
+    }
+
+    
 
 def get_readings(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Reading).offset(skip).limit(limit).all()
+    # return db.query(models.Reading).offset(skip).limit(limit).all()
+   try:
+       readings = db.query(models.Reading).offset(skip).limit(limit).all()
+       readings_list = []
+       for reading in readings:
+              room_id = db.query(models.MeterToRoom.room_id).filter(models.MeterToRoom.meter_id == reading.meter_id).scalar()
+              room_number = db.query(models.Room.room_number).filter(models.Room.room_id == room_id)
+              quarter_id = db.query(models.Room.quarter_type_id).filter(models.Room.room_id == room_id)
+              quarter_name = db.query(models.QuarterType.quarter_name).filter(models.QuarterType.quarter_id == quarter_id).scalar()
+              readings_list.append({
+                "reading_id": reading.reading_id,
+                "meter_id": reading.meter_id,
+                "room_id": room_id,
+                "room_number": room_number.scalar(),
+                "quarter_type": quarter_name,
+                "month": reading.month,
+                "year": reading.year,
+                "locked": reading.locked,
+                "units_consumed": reading.units_consumed,
+              })
+       return readings_list
+   except Exception as e:
+        return None
+    
 
 def create_reading(db: Session, reading: schemas.ReadingCreate):
     meter_id = reading.meter_id

@@ -285,6 +285,8 @@ class ReadingRead(ReadingBase):
     year: int
     units_consumed: int
     locked: bool
+    quarter_type: Optional[str]
+    room_number: Optional[int]
 
 class ReadingUpdate(ReadingBase,ReadingCreate):
     pass
