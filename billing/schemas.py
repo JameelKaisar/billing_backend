@@ -54,6 +54,45 @@ class UserDelete(BaseModel):
     class Config:
         orm_mode = True
 
+# Department
+class DepartmentBase(BaseModel):
+    department_name: str
+    class Config:
+        orm_mode = True
+
+class DepartmentCreate(DepartmentBase):
+    pass
+
+class DepartmentRead(DepartmentBase):
+    department_id: int
+
+class DepartmentUpdate(DepartmentRead):
+    pass
+
+class DepartmentDelete(BaseModel):
+    department_id: int
+    class Config:
+        orm_mode = True
+# user to department
+class UserToDepartmentBase(BaseModel):
+    department_id: int
+    user_id: int
+    class Config:
+        orm_mode = True
+        
+class UserToDepartmentCreate(UserToDepartmentBase):
+    pass
+
+class UserToDepartmentRead(UserToDepartmentBase):
+    user_to_department_id: int
+    
+class UserToDepartmentUpdate(UserToDepartmentRead):
+    pass
+
+class UserToDepartmentDelete(BaseModel):
+    user_to_department_id: int
+    class Config:
+        orm_mode = True
 
 # user
 # class UserBase(BaseModel):
@@ -368,5 +407,4 @@ class BillRead(BillCreate):
 
 class BillDelete(BillCreate):
     bill_id: int
-
 
