@@ -259,6 +259,28 @@ class RoomCreationReadMetered(RoomCreationBase):
 class RoomCreationReadUnmetered(RoomCreationBase):
     flat_rate_name: str
 
+# user creation
+class UserCreationBase(BaseModel):
+    username: str
+    full_name: str | None = None
+    class Config:
+        orm_mode = True
+
+class UserCreationCreate(UserCreationBase):
+    password: str
+    disabled: bool = False
+    department_id: int
+    room_id: int
+
+class UserCreationRead(UserCreationBase):
+    user_id: int
+    disabled: bool = False
+    
+class UserCreationDelete(BaseModel):
+    user_id: int
+    class Config:
+        orm_mode = True
+
 # Flat Rate
 class FlatRateBase(BaseModel):
     flat_rate_id:int
