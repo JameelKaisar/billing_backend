@@ -13,6 +13,12 @@ class User(Base):
     full_name = Column(String)
     disabled = Column(Boolean, nullable=False, default=False)
 
+class Department(Base):
+    __tablename__ = "departments"
+
+    department_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    department_name = Column(String, nullable=False, unique=True)
+
 
 class Meter(Base):
     __tablename__ = "meters"
@@ -40,6 +46,12 @@ class Room(Base):
 
     # quarter_type = relationship("QuarterType", back_populates="rooms", cascade="all, delete")
 
+class UserToDepartment(Base):
+    __tablename__ = "user_to_department"
+
+    user_to_department_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, unique=True)
+    department_id = Column(Integer, ForeignKey("departments.department_id"), nullable=False)
 
 class UserToRoom(Base):
     __tablename__ = "user_to_room"

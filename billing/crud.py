@@ -41,6 +41,70 @@ def delete_user(db: Session, user: schemas.UserDelete):
     db.delete(db_user)
     db.commit()
     return db_user
+# department
+def get_department(db: Session, department_id: int):
+    return db.query(models.Department).filter(models.Department.department_id == department_id).first()
+
+def get_departments(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Department).offset(skip).limit(limit).all()
+
+def create_department(db: Session, department: schemas.DepartmentCreate):
+    department_name = department.department_name
+    db_department = models.Department(department_name=department_name)
+    db.add(db_department)
+    db.commit()
+    db.refresh(db_department)
+    return db_department
+
+def update_department(db: Session, department: schemas.DepartmentUpdate):
+    department_id = department.department_id
+    department_name = department.department_name
+    db_department = db.query(models.Department).filter(models.Department.department_id == department_id).first()
+    db_department.department_name = department_name
+    db.commit()
+    db.refresh(db_department)
+    return db_department
+
+def delete_department(db: Session, department: schemas.DepartmentDelete):
+    department_id = department.department_id
+    db_department = db.query(models.Department).filter(models.Department.department_id == department_id).first()
+    db.delete(db_department)
+    db.commit()
+    return db_department
+
+# user to department
+def get_user_to_department(db: Session, user_to_department_id: int):
+    return db.query(models.UserToDepartment).filter(models.UserToDepartment.user_to_department_id == user_to_department_id).first()
+
+def get_user_to_departments(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.UserToDepartment).offset(skip).limit(limit).all()
+
+def create_user_to_department(db: Session, user_to_department: schemas.UserToDepartmentCreate):
+    user_id = user_to_department.user_id
+    department_id = user_to_department.department_id
+    db_user_to_department = models.UserToDepartment(user_id=user_id, department_id=department_id)
+    db.add(db_user_to_department)
+    db.commit()
+    db.refresh(db_user_to_department)
+    return db_user_to_department
+
+def update_user_to_department(db: Session, user_to_department: schemas.UserToDepartmentUpdate):
+    user_to_department_id = user_to_department.user_to_department_id
+    user_id = user_to_department.user_id
+    department_id = user_to_department.department_id
+    db_user_to_department = db.query(models.UserToDepartment).filter(models.UserToDepartment.user_to_department_id == user_to_department_id).first()
+    db_user_to_department.user_id = user_id
+    db_user_to_department.department_id = department_id
+    db.commit()
+    db.refresh(db_user_to_department)
+    return db_user_to_department
+
+def delete_user_to_department(db: Session, user_to_department: schemas.UserToDepartmentDelete):
+    user_to_department_id = user_to_department.user_to_department_id
+    db_user_to_department = db.query(models.UserToDepartment).filter(models.UserToDepartment.user_to_department_id == user_to_department_id).first()
+    db.delete(db_user_to_department)
+    db.commit()
+    return db_user_to_department
 
 # meter
 def get_meter(db: Session, meter_id: int):

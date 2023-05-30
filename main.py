@@ -12,7 +12,7 @@ from billing.common import get_db
 from billing.database import engine
 from billing.const import ACCESS_TOKEN_EXPIRE_MINUTES
 from billing.auth import get_current_active_user, authenticate_user, create_access_token
-from billing.models import Base, User, QuarterType, Room, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading
+from billing.models import Base, User, QuarterType, Room, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading, Department, UserToDepartment
 
 
 
@@ -97,6 +97,96 @@ def delete_user(user: schemas.UserDelete, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="User not found")
     return crud.delete_user(db, user)
 
+# department
+
+@app.post("/department/", response_model=schemas.DepartmentRead)
+def create_department(department: schemas.DepartmentCreate, db: Session = Depends(get_db)):
+    dept = db.query(Department).filter(Department.department_name == department.department_name).first()
+    if not dept:
+    # try:
+        return crud.create_department(db=db, department=department)
+    # except:
+    raise HTTPException(status_code=400, detail="Department already exists")
+
+@app.get("/department/", response_model=schemas.DepartmentRead)
+def read_department(department_id: int, db: Session = Depends(get_db)):
+    department = crud.get_department(db, department_id)
+    if not department:
+        raise HTTPException(status_code=400, detail="Department not found")
+    return department
+
+@app.get("/departments/", response_model=list[schemas.DepartmentRead])
+def get_departments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    departments = crud.get_departments(db, skip=skip, limit=limit)
+    return departments
+
+@app.put("/department/", response_model=schemas.DepartmentRead)
+def update_department(department: schemas.DepartmentUpdate, db: Session = Depends(get_db)):
+    dept = crud.get_department(db, department.department_id)
+    if not dept:
+        raise HTTPException(status_code=400, detail="Department not found")
+    dept = db.query(Department).filter(Department.department_name == department.department_name).first()
+    if not dept:
+        return crud.update_department(db, department)
+    raise HTTPException(status_code=400, detail="Department already exists")
+
+@app.delete("/department/", response_model=schemas.DepartmentRead)
+def delete_department(department: schemas.DepartmentDelete, db: Session = Depends(get_db)):
+    try:
+        return crud.delete_department(db, department)
+    except:
+        raise HTTPException(status_code=400, detail="Department not found")
+    
+# user to department
+# check if user exists and dept exists
+@app.post("/user_to_department/", response_model=schemas.UserToDepartmentRead)
+def create_user_to_department(user_department: schemas.UserToDepartmentCreate, db: Session = Depends(get_db)):
+    exists = db.query(UserToDepartment).filter(UserToDepartment.user_id == user_department.user_id).first()
+    if exists:
+        raise HTTPException(status_code=400, detail="UserToDepartment already exists")
+    user_exists = db.query(User).filter(User.user_id == user_department.user_id).first()
+    if not user_exists:
+        raise HTTPException(status_code=400, detail="User not found")
+    dept_exists = db.query(Department).filter(Department.department_id == user_department.department_id).first()
+    if not dept_exists:
+        raise HTTPException(status_code=400, detail="Department not found")
+    return crud.create_user_to_department(db=db, user_to_department=user_department)
+    
+
+@app.get("/user_to_department/", response_model=schemas.UserToDepartmentRead)
+def read_user_to_department(user_to_department_id: int, db: Session = Depends(get_db)):
+    user_to_department = crud.get_user_to_department(db, user_to_department_id)
+    if not user_to_department:
+        raise HTTPException(status_code=400, detail="UserToDepartment not found")
+    return user_to_department
+
+@app.get("/user_to_departments/", response_model=list[schemas.UserToDepartmentRead])
+def get_user_to_departments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    user_to_departments = crud.get_user_to_departments(db, skip=skip, limit=limit)
+    return user_to_departments
+
+@app.put("/user_to_department/", response_model=schemas.UserToDepartmentRead)
+def update_user_to_department(user_to_department: schemas.UserToDepartmentUpdate, db: Session = Depends(get_db)):
+    usr_dept = crud.get_user_to_department(db, user_to_department.user_to_department_id)
+    if not usr_dept:
+        raise HTTPException(status_code=400, detail="UserToDepartment not found")
+    user_exists = db.query(User).filter(User.user_id == user_to_department.user_id).first()
+    if not user_exists:
+        raise HTTPException(status_code=400, detail="User not found")
+    dept_exists = db.query(Department).filter(Department.department_id == user_to_department.department_id).first()
+    if not dept_exists:
+        raise HTTPException(status_code=400, detail="Department not found")
+    user_dept = db.query(UserToDepartment).filter(UserToDepartment.user_id == user_to_department.user_id, UserToDepartment.department_id == user_to_department.department_id).first()
+    if user_dept:
+        raise HTTPException(status_code=400, detail="User already has same Department")
+    return crud.update_user_to_department(db, user_to_department)
+
+@app.delete("/user_to_department/", response_model=schemas.UserToDepartmentRead)
+def delete_user_to_department(user_to_department: schemas.UserToDepartmentDelete, db: Session = Depends(get_db)):
+    usr_dept = crud.get_user_to_department(db, user_to_department.user_to_department_id)
+    if not usr_dept:
+        raise HTTPException(status_code=400, detail="UserToDepartment not found")
+    return crud.delete_user_to_department(db, user_to_department)
 
 # meter
 @app.post("/meter/", response_model=schemas.MeterRead)
