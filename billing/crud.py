@@ -451,6 +451,41 @@ def delete_room_creation(db: Session, room_creation: schemas.RoomCreationDelete)
     db.commit()
     return {"message": "Room deletion successful"}
 
+# user creation
+def create_user_creation(db: Session, user_creation: schemas.UserCreationCreate):
+    username = user_creation.username
+    password = user_creation.password
+    full_name = user_creation.full_name
+    disabled = user_creation.disabled
+    hashed_password = get_password_hash(password)
+    db_user = models.User(username=username, hashed_password=hashed_password, full_name=full_name, disabled=disabled)
+    db.add(db_user)
+    db.flush()
+    dpt_id = user_creation.department_id
+    db_user_to_department = models.UserToDepartment(user_id=db_user.user_id, department_id=dpt_id)
+    db.add(db_user_to_department)
+    db.flush()
+    rm_id = user_creation.room_id
+    db_user_to_room = models.UserToRoom(user_id=db_user.user_id, room_id=rm_id)
+    db.add(db_user_to_room)
+    db.flush()
+    db.commit()
+    db.refresh(db_user)
+    db.refresh(db_user_to_department)
+    db.refresh(db_user_to_room)
+    return db_user
+
+def delete_user_creation(db: Session, user_creation: schemas.UserCreationDelete):
+    user_id = user_creation.user_id
+    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    db_user_to_department = db.query(models.UserToDepartment).filter(models.UserToDepartment.user_id == user_id).first()
+    db_user_to_room = db.query(models.UserToRoom).filter(models.UserToRoom.user_id == user_id).first()
+    db.delete(db_user_to_department)
+    db.delete(db_user_to_room)
+    db.delete(db_user)
+    db.commit()
+    return {"message": "User deletion successful"}
+
 #flat rate
 def get_flat_rate(db: Session, flat_rate_id: int):
     return db.query(models.FlatRate).filter(models.FlatRate.flat_rate_id == flat_rate_id).first()

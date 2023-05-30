@@ -472,6 +472,31 @@ def delete_room_creation(room_creation: schemas.RoomCreationDelete, db: Session 
     crud.delete_room_creation(db, room_creation)
     return room_creation
 
+# user creation
+@app.post("/user_creation/", response_model=schemas.UserCreationRead)
+def create_user_creation(user_creation: schemas.UserCreationCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user_creation.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    db_room = db.query(Room).filter(Room.room_id == user_creation.room_id).first()
+    if not db_room:
+        raise HTTPException(status_code=400, detail="Room does not exist")
+    db_department = db.query(Department).filter(Department.department_id == user_creation.department_id).first()
+    if not db_department:
+        raise HTTPException(status_code=400, detail="Department does not exist")
+    try:
+        return crud.create_user_creation(db=db, user_creation=user_creation)
+    except:
+        raise HTTPException(status_code=400, detail="User creation failed")
+
+@app.delete("/user_creation/", response_model=Dict[str, str])
+def delete_user_creation(user_creation: schemas.UserCreationDelete, db: Session = Depends(get_db)):
+    db_user_creation = crud.get_user_creation(db, user_creation.user_creation_id)
+    if db_user_creation is None:
+        raise HTTPException(status_code=404, detail="User creation not found")
+    crud.delete_user_creation(db, user_creation)
+    return user_creation
+
 # flat_rate
 @app.post("/flat_rate/", response_model=schemas.FlatRateRead)
 def create_flat_rate(flat_rate: schemas.FlatRateCreate, db: Session = Depends(get_db)):
