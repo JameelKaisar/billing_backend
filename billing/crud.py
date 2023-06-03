@@ -717,25 +717,54 @@ def delete_reading(db: Session, reading: schemas.ReadingDelete):
 
 # bill
 
-def get_bill(db: Session, bill_id: int):
-    return db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
+# def get_bill(db: Session, bill_id: int):
+#     return db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
 
-def get_bills(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Bill).offset(skip).limit(limit).all()
+# def get_bills(db: Session, skip: int = 0, limit: int = 100):
+#     return db.query(models.Bill).offset(skip).limit(limit).all()
 
-def create_bill(db: Session, bill: schemas.BillCreate):
-    bill_name = bill.bill_name
-    bill_value = bill.bill_value
-    bill_upto = bill.bill_upto
-    db_bill = models.Bill(bill_name=bill_name, bill_value=bill_value, bill_upto=bill_upto)
+# def create_bill(db: Session, bill: schemas.BillCreate):
+#     bill_name = bill.bill_name
+#     bill_value = bill.bill_value
+#     bill_upto = bill.bill_upto
+#     db_bill = models.Bill(bill_name=bill_name, bill_value=bill_value, bill_upto=bill_upto)
+#     db.add(db_bill)
+#     db.commit()
+#     db.refresh(db_bill)
+#     return db_bill
+
+# def delete_bill(db: Session, bill: schemas.BillDelete):
+#     bill_id = bill.bill_id
+#     db_bill = db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
+#     db.delete(db_bill)
+#     db.commit()
+#     return db_bill
+
+def get_unmetered_bill(db: Session, bill_id: int):
+    return db.query(models.UnmeteredBill).filter(models.UnmeteredBill.bill_id == bill_id).first()
+
+def get_unmetered_bills(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.UnmeteredBill).offset(skip).limit(limit).all()
+
+def create_unmetered_bill(db: Session, unmetered_bill: schemas.UnmeteredBillCreate):
+    room_id = unmetered_bill.room_id
+    month = unmetered_bill.month
+    year = unmetered_bill.year
+    user_to_room = db.query(models.UserToRoom).filter(models.UserToRoom.room_id == room_id).first()
+    user_id = user_to_room.user_id
+    # get flat rate
+    flat_rate_id = db.query(models.FlatRateToRoom.flat_rate_id).filter(models.FlatRateToRoom.room_id == room_id).scalar()
+    flat_rate = db.query(models.FlatRate.flat_rate_value).filter(models.FlatRate.flat_rate_id == flat_rate_id).scalar()
+    db_bill = models.UnmeteredBill(room_id=room_id, user_id=user_id, month=month, year=year, amount=flat_rate)
     db.add(db_bill)
     db.commit()
     db.refresh(db_bill)
     return db_bill
 
-def delete_bill(db: Session, bill: schemas.BillDelete):
+def delete_unmetered_bill(db: Session, bill: schemas.UnmeteredBillDelete):
     bill_id = bill.bill_id
-    db_bill = db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
+    db_bill = db.query(models.UnmeteredBill).filter(models.UnmeteredBill.bill_id == bill_id).first()
     db.delete(db_bill)
     db.commit()
     return db_bill
+
