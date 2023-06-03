@@ -447,6 +447,7 @@ class UnmeteredBillRead(UnmeteredBillBase):
     month: int
     year: int
     amount: int
+    user_id: int
 
 class UnmeteredBillUpdate(UnmeteredBillBase):
     month: int
@@ -455,4 +456,29 @@ class UnmeteredBillUpdate(UnmeteredBillBase):
 
 class UnmeteredBillDelete(UnmeteredBillBase):
     pass
+
+#metered bill
+
+class MeteredBillBase(BaseModel):
+    metered_bill_id: int
+    class Config:
+        orm_mode = True
+
+class MeteredBillCreate(BaseModel):
+    meter_id: int
+    month: int
+    year: int
     
+    class Config:
+        orm_mode = True
+
+class MeteredBillRead(MeteredBillBase):
+    meter_id: int
+    user_id: int
+    room_id: int
+    month: int
+    year: int
+    amount: int
+
+class MeteredBillDelete(MeteredBillBase):
+    pass

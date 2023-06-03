@@ -768,3 +768,53 @@ def delete_unmetered_bill(db: Session, bill: schemas.UnmeteredBillDelete):
     db.commit()
     return db_bill
 
+# metered bill
+
+def get_metered_bill(db: Session, bill_id: int):
+    return db.query(models.MeteredBill).filter(models.MeteredBill.bill_id == bill_id).first()
+
+def get_metered_bills(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.MeteredBill).offset(skip).limit(limit).all()
+
+def create_metered_bill(db: Session, metered_bill: schemas.MeteredBillCreate):
+    meter_id = metered_bill.meter_id
+    month = metered_bill.month
+    year = metered_bill.year
+    # get units consumed
+    units_consumed = db.query(models.Reading.units_consumed).filter(models.Reading.meter_id == meter_id, models.Reading.year == year, models.Reading.month == month).scalar()
+    # get meter rate
+    room_id = db.query(models.MeterToRoom.room_id).filter(models.MeterToRoom.meter_id == meter_id).scalar()
+    meter_rate_id = db.query(models.MeterRateToRoom.meter_rate_id).filter(models.MeterRateToRoom.room_id == room_id).scalar()
+    
+    meter_rate_name = db.query(models.MeterRate.meter_rate_name).filter(models.MeterRate.meter_rate_id == meter_rate_id).scalar()
+    
+    
+    meter_rates = db.query(models.MeterRate.meter_rate_upto, models.MeterRate.meter_rate_value).filter(
+    models.MeterRate.meter_rate_name == meter_rate_name).all()
+    meter_rate_list = [(meter_rate.meter_rate_upto, meter_rate.meter_rate_value) for meter_rate in meter_rates]
+    sorted_meter_rate_list = sorted(meter_rate_list, key=lambda x: x[0])
+    
+    bill_value = 0
+    for val in sorted_meter_rate_list:
+        if units_consumed <= val[0]:
+            bill_value += units_consumed * val[1]
+            break
+        else:
+            bill_value += val[0] * val[1]
+            units_consumed -= val[0]
+            
+    user_id = db.query(models.UserToRoom.user_id).filter(models.UserToRoom.room_id == room_id).scalar()
+    
+    db_bill = models.MeteredBill(user_id = user_id, meter_id=meter_id, room_id = room_id, month=month, year=year, amount=bill_value)
+    db.add(db_bill)
+    db.commit()
+    db.refresh(db_bill)
+    return db_bill
+
+
+def delete_metered_bill(db: Session, bill: schemas.MeteredBillDelete):
+    bill_id = bill.bill_id
+    db_bill = db.query(models.MeteredBill).filter(models.MeteredBill.bill_id == bill_id).first()
+    db.delete(db_bill)
+    db.commit()
+    return db_bill
