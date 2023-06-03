@@ -94,25 +94,6 @@ class UserToDepartmentDelete(BaseModel):
     class Config:
         orm_mode = True
 
-# user
-# class UserBase(BaseModel):
-#     user_id: int
-#     class Config:
-#         orm_mode = True
-    
-# class UserCreate(BaseModel):
-#     user_name: str
-#     class Config:
-#         orm_mode = True
-# class UserRead(UserBase):
-#     user_name: str
-
-# class UserUpdate(UserBase):
-#     user_name: str
-    
-# class UserDelete(UserBase):
-#     pass
-
 # meter
 class MeterBase(BaseModel):
     initial_reading: int
@@ -408,29 +389,6 @@ class ReadingUpdate(ReadingBase,ReadingCreate):
 class ReadingDelete(ReadingBase):
     pass
 
-#bill
-# class BillBase(BaseModel):
-#     user_id: int
-#     room_id: int
-#     meter_id: int
-
-# class BillCreate(BillBase):
-#     month: int
-#     year: int
-#     amount: int
-    
-# # Bill cannot be updated 
-
-# class BillRead(BillCreate):
-#     bill_id: int
-
-#     class Config:
-#         orm_mode = True
-
-# class BillDelete(BillCreate):
-#     bill_id: int
-
-# unmeteread bill
 
 class UnmeteredBillBase(BaseModel):
     unmetered_bill_id: int

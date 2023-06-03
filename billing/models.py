@@ -126,24 +126,7 @@ class Reading(Base):
         CheckConstraint('units_consumed >= 0', name='check_units_consumed'),
     )
     # meter = relationship("Meter", back_populates="readings")
-
-
-# class Bill(Base):
-#     __tablename__ = "bills"
-
-#     bill_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-#     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-#     room_id = Column(Integer, ForeignKey("rooms.room_id"), nullable=False)
-#     meter_id = Column(Integer, ForeignKey("meters.meter_id"), nullable=False)
-#     month = Column(Integer, nullable=False)
-#     year = Column(Integer, nullable=False)
-#     amount = Column(Integer, nullable=False)
-#     __table_args__ = (
-#         CheckConstraint('month >= 1 AND month <= 12', name='check_month'),
-#         CheckConstraint('year > 0', name='check_year'),
-#     )
-#     user = relationship("User", back_populates="bills")
-#     room = relationship("Room", back_populates="bills")
+    
 class MeteredBill(Base):
     __tablename__ = "metered_bills"
 
