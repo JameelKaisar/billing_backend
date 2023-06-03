@@ -409,24 +409,50 @@ class ReadingDelete(ReadingBase):
     pass
 
 #bill
-class BillBase(BaseModel):
-    user_id: int
-    room_id: int
-    meter_id: int
+# class BillBase(BaseModel):
+#     user_id: int
+#     room_id: int
+#     meter_id: int
 
-class BillCreate(BillBase):
-    month: int
-    year: int
-    amount: int
+# class BillCreate(BillBase):
+#     month: int
+#     year: int
+#     amount: int
     
-# Bill cannot be updated 
+# # Bill cannot be updated 
 
-class BillRead(BillCreate):
-    bill_id: int
+# class BillRead(BillCreate):
+#     bill_id: int
 
+#     class Config:
+#         orm_mode = True
+
+# class BillDelete(BillCreate):
+#     bill_id: int
+
+# unmeteread bill
+
+class UnmeteredBillBase(BaseModel):
+    unmetered_bill_id: int
     class Config:
         orm_mode = True
 
-class BillDelete(BillCreate):
-    bill_id: int
+class UnmeteredBillCreate(BaseModel):
+    room_id: int
+    month: int
+    year: int
+    
+class UnmeteredBillRead(UnmeteredBillBase):
+    room_id: int
+    month: int
+    year: int
+    amount: int
 
+class UnmeteredBillUpdate(UnmeteredBillBase):
+    month: int
+    year: int
+    amount: int
+
+class UnmeteredBillDelete(UnmeteredBillBase):
+    pass
+    
