@@ -771,7 +771,7 @@ def delete_unmetered_bill(db: Session, bill: schemas.UnmeteredBillDelete):
 # metered bill
 
 def get_metered_bill(db: Session, bill_id: int):
-    return db.query(models.MeteredBill).filter(models.MeteredBill.bill_id == bill_id).first()
+    return db.query(models.MeteredBill).filter(models.MeteredBill.metered_bill_id == bill_id).first()
 
 def get_metered_bills(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.MeteredBill).offset(skip).limit(limit).all()
@@ -813,8 +813,39 @@ def create_metered_bill(db: Session, metered_bill: schemas.MeteredBillCreate):
 
 
 def delete_metered_bill(db: Session, bill: schemas.MeteredBillDelete):
-    bill_id = bill.bill_id
-    db_bill = db.query(models.MeteredBill).filter(models.MeteredBill.bill_id == bill_id).first()
+    bill_id = bill.metered_bill_id
+    db_bill = db.query(models.MeteredBill).filter(models.MeteredBill.metered_bill_id == bill_id).first()
     db.delete(db_bill)
     db.commit()
     return db_bill
+
+
+# bulk bill generation
+
+def create_bulk_metered_bill(db: Session, metered_bill: schemas.BulkMeteredBillCreate):
+    month = metered_bill.month
+    year = metered_bill.year
+    # get all metered rooms
+    meterids = db.query(models.MeterToRoom.meter_id).all()
+    db_bill_list = []
+    for meterid in meterids:
+        metered_bill_exists = db.query(models.MeteredBill).filter(models.MeteredBill.meter_id == meterid[0], models.MeteredBill.month == month, models.MeteredBill.year == year).first()
+        if metered_bill_exists:
+            continue
+        db_bill = create_metered_bill(db, schemas.MeteredBillCreate(meter_id=meterid[0], month=month, year=year))
+        db_bill_list.append(db_bill)
+    return db_bill_list
+
+def create_bulk_unmetered_bill(db: Session, unmetered_bill: schemas.BulkUnmeteredBillCreate):
+    month = unmetered_bill.month
+    year = unmetered_bill.year
+    # get all unmetered rooms
+    roomids = db.query(models.FlatRateToRoom.room_id).all()
+    db_bill_list = []
+    for roomid in roomids:
+        unmetered_bill_exists = db.query(models.UnmeteredBill).filter(models.UnmeteredBill.room_id == roomid[0], models.UnmeteredBill.month == month, models.UnmeteredBill.year == year).first()
+        if unmetered_bill_exists:
+            continue
+        db_bill = create_unmetered_bill(db, schemas.UnmeteredBillCreate(room_id=roomid[0], month=month, year=year))
+        db_bill_list.append(db_bill)
+    return db_bill_list
