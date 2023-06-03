@@ -482,3 +482,16 @@ class MeteredBillRead(MeteredBillBase):
 
 class MeteredBillDelete(MeteredBillBase):
     pass
+
+# bulk metered bill
+class BulkMeteredBillCreate(BaseModel):
+    month: int
+    year: int
+    class Config:
+        orm_mode = True
+        
+class BulkUnmeteredBillCreate(BaseModel):
+    month: int
+    year: int
+    class Config:
+        orm_mode = True

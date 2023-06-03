@@ -872,3 +872,20 @@ def delete_metered_bill(metered_bill: schemas.MeteredBillDelete, db: Session = D
         raise HTTPException(status_code=400, detail="Metered bill not found")
     crud.delete_metered_bill(db, metered_bill)
     return metered_bill
+
+# bulk generate bills
+
+@app.post("/generate_bulk_metered_bills/")
+def generate_bulk_metered_bills(bulk_generate_bills: schemas.BulkMeteredBillCreate, db: Session = Depends(get_db)):
+    if True:
+        return crud.create_bulk_metered_bill(db=db, metered_bill=bulk_generate_bills)
+    # except:
+    #     raise HTTPException(status_code=400, detail="Something went wrong :(")
+    
+
+@app.post("/generate_bulk_unmetered_bills/")
+def generate_bulk_unmetered_bills(bulk_generate_bills: schemas.BulkUnmeteredBillCreate, db: Session = Depends(get_db)):
+    if True:
+        return crud.create_bulk_unmetered_bill(db=db, unmetered_bill=bulk_generate_bills)
+    # except:
+    #     raise HTTPException(status_code=400, detail="Something went wrong :(")
