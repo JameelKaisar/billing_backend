@@ -305,35 +305,6 @@ def create_room_creation(db: Session, room_creation: schemas.RoomCreationCreate)
         db.refresh(db_flat_rate_to_room)
     return db_rooms
 
-# def update_room_creation(db: Session, room_creation: schemas.RoomCreationUpdate):
-#     room_id = room_creation.room_id
-#     quarter_type_id = room_creation.quarter_type_id
-#     room_number = room_creation.room_number
-#     is_metered = room_creation.is_metered
-#     db_rooms = db.query(models.Room).filter(models.Room.room_id == room_id).first()
-#     db_rooms.quarter_type_id = quarter_type_id
-#     db_rooms.room_number = room_number
-#     db_rooms.is_metered = is_metered
-#     db.commit()
-#     db.refresh(db_rooms)
-#     if is_metered:
-#         initial_reading = room_creation.initial_reading
-#         meter_rate_id = room_creation.meter_rate_id
-#         db_meter = db.query(models.Meter).filter(models.Meter.meter_id == db_rooms.meter_to_room[0].meter_id).first()
-#         db_meter.initial_reading = initial_reading
-#         db_meter_rate_to_room = db.query(models.MeterRateToRoom).filter(models.MeterRateToRoom.room_id == room_id).first()
-#         db_meter_rate_to_room.meter_rate_id = meter_rate_id
-#         db.commit()
-#         db.refresh(db_meter)
-#         db.refresh(db_meter_rate_to_room)
-#     else:
-#         flat_rate_id = room_creation.flat_rate_id
-#         db_flat_rate_to_room = db.query(models.FlatRateToRoom).filter(models.FlatRateToRoom.room_id == room_id).first()
-#         db_flat_rate_to_room.flat_rate_id = flat_rate_id
-#         db.commit()
-#         db.refresh(db_flat_rate_to_room)
-#     return db_rooms
-
 def get_room_creation_metered(db: Session, room_id: int):
     try:
         db_rooms = db.query(models.Room).filter(models.Room.room_id == room_id).first()
@@ -355,12 +326,6 @@ def get_room_creation_metered(db: Session, room_id: int):
     except Exception as e:
         return None
 
-# def get_room_creations_metered(db: Session, skip: int = 0, limit: int = 100):
-#     try:
-#         db_rooms = db.query(models.Room).filter(models.Room.is_metered == True).offset(skip).limit(limit).all()
-#         return db_rooms
-#     except Exception as e:
-#         return None
 def get_room_creations_metered(db: Session, skip: int = 0, limit: int = 100):
     try:
         db_rooms = db.query(models.Room).filter(models.Room.is_metered == True).offset(skip).limit(limit).all()
@@ -714,31 +679,6 @@ def delete_reading(db: Session, reading: schemas.ReadingDelete):
     db.delete(db_reading)
     db.commit()
     return db_reading
-
-# bill
-
-# def get_bill(db: Session, bill_id: int):
-#     return db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
-
-# def get_bills(db: Session, skip: int = 0, limit: int = 100):
-#     return db.query(models.Bill).offset(skip).limit(limit).all()
-
-# def create_bill(db: Session, bill: schemas.BillCreate):
-#     bill_name = bill.bill_name
-#     bill_value = bill.bill_value
-#     bill_upto = bill.bill_upto
-#     db_bill = models.Bill(bill_name=bill_name, bill_value=bill_value, bill_upto=bill_upto)
-#     db.add(db_bill)
-#     db.commit()
-#     db.refresh(db_bill)
-#     return db_bill
-
-# def delete_bill(db: Session, bill: schemas.BillDelete):
-#     bill_id = bill.bill_id
-#     db_bill = db.query(models.Bill).filter(models.Bill.bill_id == bill_id).first()
-#     db.delete(db_bill)
-#     db.commit()
-#     return db_bill
 
 def get_unmetered_bill(db: Session, bill_id: int):
     return db.query(models.UnmeteredBill).filter(models.UnmeteredBill.bill_id == bill_id).first()

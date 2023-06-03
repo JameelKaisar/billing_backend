@@ -758,51 +758,6 @@ def delete_reading(reading: schemas.ReadingDelete, db: Session = Depends(get_db)
     crud.delete_reading(db, reading)
     return reading
 
-
-# bill
-
-# check user_id, meter_id and room_id belong to same user -> not req as we are calculating it ourselves in backend
-# @app.post("/bill/", response_model=schemas.BillRead)
-# def create_bill(bill: schemas.BillCreate, db: Session = Depends(get_db)):
-#     room_exists = crud.get_room(db, bill.room_id)
-#     if not room_exists:
-#         raise HTTPException(status_code=400, detail="Room not found")
-#     bill_exists = crud.get_bill(db, bill.bill_id)
-#     if bill_exists:
-#         raise HTTPException(status_code=400, detail="Bill already exists")
-#     room_exists = crud.get_room(db, bill.room_id)
-#     if not room_exists:
-#         raise HTTPException(status_code=400, detail="Room not found")
-#     meter_exists = crud.get_meter(db, bill.meter_id)
-#     if not meter_exists:
-#         raise HTTPException(status_code=400, detail="Meter not found")
-#     try:
-#         return crud.create_bill(db=db, bill=bill)
-#     except:
-#         raise HTTPException(status_code=400, detail="Something went wrong :(")
-    
-# @app.get("/bill/", response_model=schemas.BillRead)
-# def read_bill(bill_id: int, db: Session = Depends(get_db)):
-#     bill = crud.get_bill(db, bill_id)
-#     if not bill:
-#         raise HTTPException(status_code=400, detail="Bill not found")
-#     return bill
-
-# @app.get("/bills/", response_model=list[schemas.BillRead])
-# def get_bills(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-#     bills = crud.get_bills(db, skip=skip, limit=limit)
-#     return bills
-    
-# @app.delete("/bill/", response_model=schemas.BillRead)
-# def delete_bill(bill: schemas.BillDelete, db: Session = Depends(get_db)):
-#     bill = crud.get_bill(db, bill.bill_id)
-#     if not bill:
-#         raise HTTPException(status_code=400, detail="Bill not found")
-#     crud.delete_bill(db, bill)
-#     return bill
-
-#unmetered_bill
-
 @app.post("/unmetered_bill/", response_model=schemas.UnmeteredBillRead)
 def create_unmetered_bill(unmetered_bills: schemas.UnmeteredBillCreate, db: Session = Depends(get_db)):
     room_exists = crud.get_room(db, unmetered_bills.room_id)
@@ -877,15 +832,15 @@ def delete_metered_bill(metered_bill: schemas.MeteredBillDelete, db: Session = D
 
 @app.post("/generate_bulk_metered_bills/")
 def generate_bulk_metered_bills(bulk_generate_bills: schemas.BulkMeteredBillCreate, db: Session = Depends(get_db)):
-    if True:
+    try:
         return crud.create_bulk_metered_bill(db=db, metered_bill=bulk_generate_bills)
-    # except:
-    #     raise HTTPException(status_code=400, detail="Something went wrong :(")
+    except:
+        raise HTTPException(status_code=400, detail="Something went wrong :(")
     
 
 @app.post("/generate_bulk_unmetered_bills/")
 def generate_bulk_unmetered_bills(bulk_generate_bills: schemas.BulkUnmeteredBillCreate, db: Session = Depends(get_db)):
-    if True:
+    try:
         return crud.create_bulk_unmetered_bill(db=db, unmetered_bill=bulk_generate_bills)
-    # except:
-    #     raise HTTPException(status_code=400, detail="Something went wrong :(")
+    except:
+        raise HTTPException(status_code=400, detail="Something went wrong :(")
