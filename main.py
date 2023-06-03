@@ -12,7 +12,7 @@ from billing.common import get_db
 from billing.database import engine
 from billing.const import ACCESS_TOKEN_EXPIRE_MINUTES
 from billing.auth import get_current_active_user, authenticate_user, create_access_token
-from billing.models import Base, User, QuarterType, Room, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading, Department, UserToDepartment, UnmeteredBill
+from billing.models import Base, User, QuarterType, Room, Meter, UserToRoom, MeterToRoom, FlatRate, MeterRate, Reading, Department, UserToDepartment, UnmeteredBill, MeteredBill
 
 
 
@@ -828,3 +828,47 @@ def get_unmetered_bills(skip: int = 0, limit: int = 100, db: Session = Depends(g
     unmetered_bills = crud.get_unmetered_bills(db, skip=skip, limit=limit)
     return unmetered_bills
 
+@app.delete("/unmetered_bill/", response_model=schemas.UnmeteredBillRead)
+def delete_unmetered_bill(unmetered_bill: schemas.UnmeteredBillDelete, db: Session = Depends(get_db)):
+    unmetered_bill = crud.get_unmetered_bill(db, unmetered_bill.unmetered_bill_id)
+    if not unmetered_bill:
+        raise HTTPException(status_code=400, detail="Unmetered bill not found")
+    crud.delete_unmetered_bill(db, unmetered_bill)
+    return unmetered_bill
+
+
+# metered_bill
+
+@app.post("/metered_bill/", response_model=schemas.MeteredBillRead)
+def create_metered_bill(metered_bill: schemas.MeteredBillCreate, db: Session = Depends(get_db)):
+    meter_exists = crud.get_meter(db, metered_bill.meter_id)
+    if not meter_exists:
+        raise HTTPException(status_code=400, detail="Meter not found")
+    metered_bill_exists = db.query(MeteredBill).filter(MeteredBill.meter_id == metered_bill.meter_id, MeteredBill.month == metered_bill.month, MeteredBill.year == metered_bill.year).first()
+    if metered_bill_exists:
+        raise HTTPException(status_code=400, detail="Metered bill already exists")
+    try:
+        return crud.create_metered_bill(db=db, metered_bill=metered_bill)
+    except:
+        raise HTTPException(status_code=400, detail="Something went wrong :(")
+    
+    
+@app.get("/metered_bill/", response_model=schemas.MeteredBillRead)
+def read_metered_bill(metered_bill_id: int, db: Session = Depends(get_db)):
+    metered_bill = crud.get_metered_bill(db, metered_bill_id)
+    if not metered_bill:
+        raise HTTPException(status_code=400, detail="Metered bill not found")
+    return metered_bill
+
+@app.get("/metered_bills/", response_model=list[schemas.MeteredBillRead])
+def get_metered_bills(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    metered_bills = crud.get_metered_bills(db, skip=skip, limit=limit)
+    return metered_bills
+
+@app.delete("/metered_bill/", response_model=schemas.MeteredBillRead)
+def delete_metered_bill(metered_bill: schemas.MeteredBillDelete, db: Session = Depends(get_db)):
+    metered_bill = crud.get_metered_bill(db, metered_bill.metered_bill_id)
+    if not metered_bill:
+        raise HTTPException(status_code=400, detail="Metered bill not found")
+    crud.delete_metered_bill(db, metered_bill)
+    return metered_bill
