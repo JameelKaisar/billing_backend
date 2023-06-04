@@ -11,6 +11,14 @@ class User(Base):
     username = Column(String, nullable=False, unique=True) # email
     hashed_password = Column(String)
     full_name = Column(String)
+    access = Column(String(20), default='user')
+
+    __table_args__ = (
+        CheckConstraint(
+            access.in_(['admin', 'operator', 'user']),
+            name='access_check'
+        ),
+    )
     disabled = Column(Boolean, nullable=False, default=False)
 
 class Department(Base):
