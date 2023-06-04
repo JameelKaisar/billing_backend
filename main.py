@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_, not_
 from datetime import timedelta
-from typing import Dict
+from typing import Dict, List
 
 from billing import crud, schemas
 from billing.common import get_db
@@ -844,3 +844,32 @@ def generate_bulk_unmetered_bills(bulk_generate_bills: schemas.BulkUnmeteredBill
         return crud.create_bulk_unmetered_bill(db=db, unmetered_bill=bulk_generate_bills)
     except:
         raise HTTPException(status_code=400, detail="Something went wrong :(")
+    
+
+# FETCH REQUEST : QuarterID , RoomNO ==> RoomID
+@app.get("/get_room_id_from_room_no/", response_model=List[schemas.QuarterToRoomRead])
+def get_room_id_from_room_no(room_number: int, quarter_id: int, db: Session = Depends(get_db)):
+    room = crud.get_room_id_from_room_no(db, room_number, quarter_id)
+    if not room:
+        raise HTTPException(status_code=400, detail="Room not found")
+    return [
+        schemas.QuarterToRoomRead(
+            room_number=room_number,
+            quarter_id=quarter_id,
+            room_id=room_id,
+            is_metered=is_metered
+        )
+        for room_id, is_metered in room
+    ]
+    
+# FETCH REQUEST : RoomID ==> MeterID
+@app.get("/get_meter_id_from_room_id/", response_model=schemas.RoomToMeterRead)
+def get_meter_id_from_room_id(room_id: int, db: Session = Depends(get_db)):
+    meter_id = crud.get_meter_id_from_room_id(db, room_id)
+    if meter_id is None:
+        raise HTTPException(status_code=400, detail="Meter not found")
+    
+    return schemas.RoomToMeterRead(
+        room_id=room_id,
+        meter_id=meter_id
+    )
