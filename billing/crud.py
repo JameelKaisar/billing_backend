@@ -20,7 +20,8 @@ def create_users(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(password)
     full_name = user.full_name
     disabled = user.disabled
-    db_user = models.User(username=username, hashed_password=hashed_password, full_name=full_name, disabled=disabled)
+    access = user.access
+    db_user = models.User(username=username, hashed_password=hashed_password, full_name=full_name, disabled=disabled, access=access)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

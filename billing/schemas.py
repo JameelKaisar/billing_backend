@@ -33,6 +33,7 @@ class UserCreate(BaseModel):
     password: str
     full_name: str | None = None
     disabled: bool = False
+    access: str = 'user'
 
     class Config:
         orm_mode = True
@@ -43,6 +44,7 @@ class UserRead(BaseModel):
     username: str
     full_name: str | None = None
     disabled: bool = False
+    access: str
 
     class Config:
         orm_mode = True
@@ -50,7 +52,6 @@ class UserRead(BaseModel):
 
 class UserDelete(BaseModel):
     user_id: int
-
     class Config:
         orm_mode = True
 
