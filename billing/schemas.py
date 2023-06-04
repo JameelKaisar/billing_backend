@@ -454,3 +454,25 @@ class BulkUnmeteredBillCreate(BaseModel):
     year: int
     class Config:
         orm_mode = True
+
+# Quarter Type , Room No ==> RoomID       
+class QuarterToRoomBase(BaseModel):
+    room_number: int
+    quarter_id: int
+    class Config:
+        orm_mode = True
+        
+class QuarterToRoomRead(QuarterToRoomBase):
+    room_id: int
+    is_metered: bool
+
+      
+# RoomID ==> MeterID
+class RoomToMeterBase(BaseModel):
+    room_id: int
+    meter_id: int
+    class Config:
+        orm_mode = True
+
+class RoomToMeterRead(RoomToMeterBase):
+    pass

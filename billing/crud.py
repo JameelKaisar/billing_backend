@@ -796,3 +796,15 @@ def create_bulk_unmetered_bill(db: Session, unmetered_bill: schemas.BulkUnmetere
         except:
             continue
     return db_bill_list
+
+# FETCH REQUESTS : quarter_type , room_no ==> room_id
+def get_room_id_from_room_no(db: Session, room_number: int, quarter_type_id: int):
+    return db.query(models.Room.room_id, models.Room.is_metered).filter(models.Room.room_number == room_number, models.Room.quarter_type_id == quarter_type_id).all()
+
+# FETCH REQUESTS : room_id ==> meter_id
+def get_meter_id_from_room_id(db: Session, room_id: int):
+    if db.query(models.Room.is_metered).filter(models.Room.room_id == room_id).scalar():
+        meter = db.query(models.MeterToRoom.meter_id).filter(models.MeterToRoom.room_id == room_id).first()
+        return meter.meter_id if meter else None
+    else:
+        return None
