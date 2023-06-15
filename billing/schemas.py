@@ -265,25 +265,37 @@ class UserCreationDelete(BaseModel):
 
 # Flat Rate
 class FlatRateBase(BaseModel):
-    flat_rate_id:int
+    flat_rate_name: str
 
     class Config:
         orm_mode = True
 
 class FlatRateCreate(BaseModel):
     flat_rate_name: str
-    flat_rate_value: int
+    flat_rate_base_value: List[int]
+    increment: List[int]
+    value_of_increment: List[int]
+    rate_per_kw_hr: int
 
     class Config:
         orm_mode = True
 
-class FlatRateRead(FlatRateBase):
+class FlatRateRead(BaseModel):
     flat_rate_name: str
-    flat_rate_value: int
+    flat_rate_base_value: List[int]
+    increment: List[int]
+    value_of_increment: List[int]
+    rate_per_kw_hr: int
+    
+    class Config:
+        orm_mode = True
 
 class FlatRateUpdate(FlatRateBase):
     flat_rate_name: str
-    flat_rate_value: int
+    flat_rate_base_value: List[int]
+    increment: List[int]
+    value_of_increment: List[int]
+    rate_per_kw_hr: int
 
 class FlatRateDelete(FlatRateBase):
     pass

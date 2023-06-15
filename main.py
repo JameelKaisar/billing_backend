@@ -498,16 +498,16 @@ def delete_user_creation(user_creation: schemas.UserCreationDelete, db: Session 
     return user_creation
 
 # flat_rate
-@app.post("/flat_rate/", response_model=schemas.FlatRateRead)
+@app.post("/flat_rate/")
 def create_flat_rate(flat_rate: schemas.FlatRateCreate, db: Session = Depends(get_db)):
-    try:
-        return crud.create_flat_rate(db=db, flat_rate=flat_rate)
-    except:
-        raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
+    # try:
+    return crud.create_flat_rate(db=db, flat_rate=flat_rate)
+    # except:
+    #     raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
 
 @app.get("/flat_rate/", response_model=schemas.FlatRateRead)
-def read_flat_rate(flat_rate_id: int, db: Session = Depends(get_db)):
-    flat_rate = crud.get_flat_rate(db, flat_rate_id)
+def read_flat_rate(flat_rate_name: str, db: Session = Depends(get_db)):
+    flat_rate = crud.get_flat_rate(db, flat_rate_name)
     if not flat_rate:
         raise HTTPException(status_code=400, detail="Flat Rate not found")
     return flat_rate
@@ -517,9 +517,9 @@ def get_flat_rates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     flat_rates = crud.get_flat_rates(db, skip=skip, limit=limit)
     return flat_rates
 
-@app.put("/flat_rate/", response_model=schemas.FlatRateRead)
+@app.put("/flat_rate/")
 def update_flat_rate(flat_rate: schemas.FlatRateUpdate, db: Session = Depends(get_db)):
-    fr = crud.get_flat_rate(db, flat_rate.flat_rate_id)
+    fr = crud.get_flat_rate(db, flat_rate.flat_rate_name)
     if not fr:
         raise HTTPException(status_code=400, detail="Flat Rate not found")
     try:
@@ -527,13 +527,16 @@ def update_flat_rate(flat_rate: schemas.FlatRateUpdate, db: Session = Depends(ge
     except:
         raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
 
-@app.delete("/flat_rate/", response_model=schemas.FlatRateRead)
+@app.delete("/flat_rate/")
 def delete_flat_rate(flat_rate: schemas.FlatRateDelete, db: Session = Depends(get_db)):
-    flat_rate = crud.get_flat_rate(db, flat_rate.flat_rate_id)
-    if not flat_rate:
-        raise HTTPException(status_code=400, detail="Flat Rate not found")
-    crud.delete_flat_rate(db, flat_rate)
-    return flat_rate
+    try:
+        flat_rte = crud.get_flat_rate(db, flat_rate.flat_rate_name)
+        if not flat_rte:
+            raise HTTPException(status_code=400, detail="Flat Rate not found")
+        crud.delete_flat_rate(db, flat_rate)
+        return flat_rate
+    except:
+        raise HTTPException(status_code=400, detail="Flat Rate Code doesn't exist")
 
 # meter_rate
 @app.post("/meter_rate/")
