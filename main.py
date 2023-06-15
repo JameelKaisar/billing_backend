@@ -536,11 +536,10 @@ def delete_flat_rate(flat_rate: schemas.FlatRateDelete, db: Session = Depends(ge
     return flat_rate
 
 # meter_rate
-@app.post("/meter_rate/", response_model=schemas.MeterRateRead)
+@app.post("/meter_rate/")
 def create_meter_rate(meter_rate: schemas.MeterRateCreate, db: Session = Depends(get_db)):
         mtr_rate = db.query(MeterRate).filter(
                 MeterRate.meter_rate_name == meter_rate.meter_rate_name,
-                MeterRate.meter_rate_upto == meter_rate.meter_rate_upto
         ).first()
         if not mtr_rate:
             return crud.create_meter_rate(db=db, meter_rate=meter_rate)
@@ -548,8 +547,8 @@ def create_meter_rate(meter_rate: schemas.MeterRateCreate, db: Session = Depends
             raise HTTPException(status_code=400, detail="Meter Rate Coding already fed")
 
 @app.get("/meter_rate/", response_model=schemas.MeterRateRead)
-def read_meter_rate(meter_rate_id: int, db: Session = Depends(get_db)):
-    meter_rate = crud.get_meter_rate(db, meter_rate_id)
+def read_meter_rate(meter_rate_name: str, db: Session = Depends(get_db)):
+    meter_rate = crud.get_meter_rate(db, meter_rate_name)
     if not meter_rate:
         raise HTTPException(status_code=400, detail="Meter Rate not found")
     return meter_rate
@@ -559,27 +558,30 @@ def get_meter_rates(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
     meter_rates = crud.get_meter_rates(db, skip=skip, limit=limit)
     return meter_rates
 
-@app.put("/meter_rate/", response_model=schemas.MeterRateRead)
+@app.put("/meter_rate/")
 def update_meter_rate(meter_rate: schemas.MeterRateUpdate, db: Session = Depends(get_db)):
-    mtr_rate = crud.get_meter_rate(db, meter_rate.meter_rate_id)
-    if not mtr_rate:
-        raise HTTPException(status_code=400, detail="Meter Rate not found")
-    mtr_rate = db.query(MeterRate).filter(
-        MeterRate.meter_rate_name == meter_rate.meter_rate_name,
-        MeterRate.meter_rate_upto == meter_rate.meter_rate_upto
-    ).first()
-    if not mtr_rate:
-        return crud.update_meter_rate(db, meter_rate)
-    else:
-        raise HTTPException(status_code=400, detail="Meter Rate Coding already fed")
+    return crud.update_meter_rate(db, meter_rate)
+    # mtr_rate = crud.get_meter_rate(db, meter_rate.meter_rate_name)
+    # if not mtr_rate:
+    #     raise HTTPException(status_code=400, detail="Meter Rate not found")
+    # mtr_rate = db.query(MeterRate).filter(
+    #     MeterRate.meter_rate_name == meter_rate.meter_rate_name,
+    #     MeterRate.meter_rate_upto == meter_rate.meter_rate_upto
+    # ).first()
+    # if not mtr_rate:
+    # else:
+    #     raise HTTPException(status_code=400, detail="Meter Rate Coding already fed")
     
-@app.delete("/meter_rate/", response_model=schemas.MeterRateRead)
+@app.delete("/meter_rate/")
 def delete_meter_rate(meter_rate: schemas.MeterRateDelete, db: Session = Depends(get_db)):
-    meter_rate = crud.get_meter_rate(db, meter_rate.meter_rate_id)
-    if not meter_rate:
+    try:
+        mtr_rate = crud.get_meter_rate(db, meter_rate.meter_rate_name)
+        if not mtr_rate:
+            raise HTTPException(status_code=400, detail="Meter Rate not found")
+        crud.delete_meter_rate(db, meter_rate)
+        return meter_rate
+    except:
         raise HTTPException(status_code=400, detail="Meter Rate not found")
-    crud.delete_meter_rate(db, meter_rate)
-    return meter_rate
 
 # flat_rate_to_room
 @app.post("/flat_rate_to_room/", response_model=schemas.FlatRateToRoomRead)

@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, validator
+from typing import Optional, List
 
 
 
@@ -313,28 +313,48 @@ class FlatRateToRoomDelete(FlatRateToRoomBase):
 
 # Meter Rate
 class MeterRateBase(BaseModel):
-    meter_rate_id:int
+    meter_rate_name:str
 
     class Config:
         orm_mode = True
 
 class MeterRateCreate(BaseModel):
     meter_rate_name: str
-    meter_rate_upto: int
-    meter_rate_value: int
+    meter_rate_upto: List[int]
+    meter_rate_value: List[int]
+    electricity_duty: int
+    supply_type: str
+    rate_per_kw_hr: int
+    @validator('supply_type')
+    def validate_supply_type(cls, supply_type):
+        valid_values = ['3-phase', 'single-phase']
+        if supply_type not in valid_values:
+            raise ValueError(f"Invalid supply_type value. Accepted values are: {', '.join(valid_values)}")
+        return supply_type
+    
 
     class Config:
         orm_mode = True
 
-class MeterRateRead(MeterRateBase):
+class MeterRateRead(BaseModel):
     meter_rate_name: str
-    meter_rate_upto: int
-    meter_rate_value: int
+    meter_rate_upto: List[int]
+    meter_rate_value: List[int]
+    electricity_duty: int
+    supply_type: str
+    rate_per_kw_hr: int
+    class Config:
+        orm_mode = True
 
-class MeterRateUpdate(MeterRateRead):
+class MeterRateUpdate(BaseModel):
     meter_rate_name: str
-    meter_rate_upto: int
-    meter_rate_value: int
+    meter_rate_upto: List[int]
+    meter_rate_value: List[int]
+    electricity_duty: int
+    supply_type: str
+    rate_per_kw_hr: int
+    class Config:
+        orm_mode = True
 
 class MeterRateDelete(MeterRateBase):
     pass

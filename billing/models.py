@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, String, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, Boolean, String, ForeignKey, CheckConstraint, Float
 from sqlalchemy.orm import relationship
 
 from billing.database import Base
@@ -109,6 +109,22 @@ class MeterRate(Base):
     meter_rate_name = Column(String, nullable=False)
     meter_rate_upto = Column(Integer, nullable=False)
     meter_rate_value = Column(Integer, nullable=False)
+
+class MeteredRateDetails(Base):
+    __tablename__ = "metered_rate_details"
+
+    metered_rate_details_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    meter_rate_name = Column(String, nullable=False, unique=True)
+    electricity_duty = Column(Integer, nullable=False)
+    supply_type = Column(String, nullable=False)
+    rate_per_kw_hr = Column(Integer, nullable=False)
+    __table_args__ = (
+        CheckConstraint(
+            supply_type.in_(['3-phase', 'single-phase']),
+            name='supply_type'
+        ),
+    )
+
 
 class MeterRateToRoom(Base):
     __tablename__ = "meter_rate_to_room"

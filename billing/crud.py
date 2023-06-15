@@ -487,39 +487,91 @@ def delete_flat_rate(db: Session, flat_rate: schemas.FlatRateDelete):
     return db_flat_rate
 
 # meter rate
-def get_meter_rate(db: Session, meter_rate_id: int):
-    return db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == meter_rate_id).first()
+def get_meter_rate(db: Session, meter_rate_name: str):
+    mtr_rates = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_name == meter_rate_name).all()
+    mtr_upto_list = []
+    mtr_values_list = []
+    for mtr_rate in mtr_rates:
+        mtr_upto_list.append(mtr_rate.meter_rate_upto)
+        mtr_values_list.append(mtr_rate.meter_rate_value)
+    mtr_details = db.query(models.MeteredRateDetails).filter(models.MeteredRateDetails.meter_rate_name == meter_rate_name).first()
+    electricity_duty = mtr_details.electricity_duty
+    supply_type = mtr_details.supply_type
+    rate_per_kw_hr = mtr_details.rate_per_kw_hr
+    return {"meter_rate_name": meter_rate_name, "meter_rate_upto": mtr_upto_list, "meter_rate_value": mtr_values_list, "electricity_duty": electricity_duty, "supply_type": supply_type, "rate_per_kw_hr": rate_per_kw_hr}
+    
+    
 
 def get_meter_rates(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.MeterRate).offset(skip).limit(limit).all()
+    mtr_details = db.query(models.MeteredRateDetails).offset(skip).limit(limit).all()
+    result = []
+    for mtr_detail in mtr_details:
+        meter_rate_name = mtr_detail.meter_rate_name
+        meter_rate_details = get_meter_rate(db, meter_rate_name)
+        result.append(meter_rate_details)
+    return result
 
 def create_meter_rate(db: Session, meter_rate: schemas.MeterRateCreate):
     meter_rate_name = meter_rate.meter_rate_name
-    meter_rate_value = meter_rate.meter_rate_value
-    meter_rate_upto = meter_rate.meter_rate_upto
-    db_meter_rate = models.MeterRate(meter_rate_name=meter_rate_name, meter_rate_value=meter_rate_value, meter_rate_upto=meter_rate_upto)
-    db.add(db_meter_rate)
+    meter_rate_values = meter_rate.meter_rate_value
+    meter_rate_uptos = meter_rate.meter_rate_upto
+    electricity_duty = meter_rate.electricity_duty
+    supply_type = meter_rate.supply_type
+    rate_per_kw_hr = meter_rate.rate_per_kw_hr
+    
+    for meter_rate_upto, meter_rate_value in zip(meter_rate_uptos, meter_rate_values):
+        db_meter_rate = models.MeterRate(meter_rate_name=meter_rate_name, meter_rate_value=meter_rate_value, meter_rate_upto=meter_rate_upto)
+        db.add(db_meter_rate)
+        db.flush()
+    db_metered_rate_details = models.MeteredRateDetails(meter_rate_name = meter_rate_name, electricity_duty = electricity_duty, supply_type = supply_type, rate_per_kw_hr = rate_per_kw_hr)
+    db.add(db_metered_rate_details)
+    db.flush()
     db.commit()
     db.refresh(db_meter_rate)
+    db.refresh(db_metered_rate_details)
     return db_meter_rate
 
 def update_meter_rate(db: Session, meter_rate: schemas.MeterRateUpdate):
-    meter_rate_id = meter_rate.meter_rate_id
     meter_rate_name = meter_rate.meter_rate_name
-    meter_rate_value = meter_rate.meter_rate_value
-    db_meter_rate = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == meter_rate_id).first()
-    db_meter_rate.meter_rate_name = meter_rate_name
-    db_meter_rate.meter_rate_value = meter_rate_value
+    meter_rate_values = meter_rate.meter_rate_value
+    meter_rate_uptos = meter_rate.meter_rate_upto
+    electricity_duty = meter_rate.electricity_duty
+    supply_type = meter_rate.supply_type
+    rate_per_kw_hr = meter_rate.rate_per_kw_hr
+
+    # Delete old meter rate
+    db.query(models.MeterRate).filter(models.MeterRate.meter_rate_name == meter_rate_name).delete()
+    db.query(models.MeteredRateDetails).filter(models.MeteredRateDetails.meter_rate_name == meter_rate_name).delete()
+
+    # Create new meter rate
+    for meter_rate_upto, meter_rate_value in zip(meter_rate_uptos, meter_rate_values):
+        db_meter_rate = models.MeterRate(
+            meter_rate_name=meter_rate_name,
+            meter_rate_value=meter_rate_value,
+            meter_rate_upto=meter_rate_upto
+        )
+        db.add(db_meter_rate)
+    db_metered_rate_details = models.MeteredRateDetails(
+        meter_rate_name=meter_rate_name,
+        electricity_duty=electricity_duty,
+        supply_type=supply_type,
+        rate_per_kw_hr=rate_per_kw_hr
+    )
+    db.add(db_metered_rate_details)
     db.commit()
+    db.refresh(db_metered_rate_details)
     db.refresh(db_meter_rate)
-    return db_meter_rate
+
+    return db_metered_rate_details
 
 def delete_meter_rate(db: Session, meter_rate: schemas.MeterRateDelete):
-    meter_rate_id = meter_rate.meter_rate_id
-    db_meter_rate = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_id == meter_rate_id).first()
-    db.delete(db_meter_rate)
+    # print(meter_rate['meter_rate_name'])
+    
+    meter_rate_name = meter_rate.meter_rate_name
+    db.query(models.MeterRate).filter(models.MeterRate.meter_rate_name == meter_rate_name).delete()
+    db.query(models.MeteredRateDetails).filter(models.MeteredRateDetails.meter_rate_name == meter_rate_name).delete()
     db.commit()
-    return db_meter_rate
+    return
 
 
 # flat_rate_to_room
