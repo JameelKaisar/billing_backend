@@ -450,6 +450,8 @@ def delete_user_creation(db: Session, user_creation: schemas.UserCreationDelete)
     db.delete(db_user)
     db.commit()
     return {"message": "User deletion successful"}
+
+
 # flat_rate
 def get_flat_rate(db: Session, flat_rate_name: str):
     
@@ -549,6 +551,8 @@ def update_flat_rate(db: Session, flat_rate: schemas.FlatRateUpdate):
     increments = flat_rate.increment
     value_of_increments = flat_rate.value_of_increment
     rate_per_kw_hrs = flat_rate.rate_per_kw_hr
+    if not (len(flat_rate_base_values) == len(flat_rate_uptos) == len(increments) == len(value_of_increments) == len(rate_per_kw_hrs)):
+        return None
     flat_rate_ids = []
     for flat_rate_base_value, flat_rate_upto, rate_per_kw_hr in zip(flat_rate_base_values, flat_rate_uptos, rate_per_kw_hrs):
         db_flat_rate = models.FlatRate(flat_rate_name=flat_rate_name, flat_rate_base_value=flat_rate_base_value, flat_rate_upto=flat_rate_upto, rate_per_kw_hr=rate_per_kw_hr)
@@ -566,6 +570,7 @@ def update_flat_rate(db: Session, flat_rate: schemas.FlatRateUpdate):
     db.commit()
     db.refresh(db_flat_rate)
     db.refresh(db_flat_rate_increment)
+    return db_flat_rate
 
 
 def delete_flat_rate(db: Session, flat_rate: schemas.FlatRateDelete):
@@ -582,6 +587,8 @@ def delete_flat_rate(db: Session, flat_rate: schemas.FlatRateDelete):
 # meter rate
 def get_meter_rate(db: Session, meter_rate_name: str):
     mtr_rates = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_name == meter_rate_name).all()
+    if mtr_rates is None or len(mtr_rates) == 0:
+        return None
     mtr_upto_list = []
     mtr_values_list = []
     for mtr_rate in mtr_rates:
