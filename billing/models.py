@@ -88,16 +88,17 @@ class FlatRate(Base):
 
     flat_rate_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     flat_rate_name = Column(String, nullable=False)
+    flat_rate_upto = Column(Integer, nullable=False)
     flat_rate_base_value = Column(Integer, nullable=False)
+    rate_per_kw_hr = Column(Integer, nullable=False)
+class FlatRateIncrement(Base):
+    __tablename__ = "flat_rate_increment"
+    
+    flat_rate_increment_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    flat_rate_id = Column(Integer, ForeignKey("flat_rates.flat_rate_id"), nullable=False)
     increment = Column(Integer, nullable=False)
     value_of_increment = Column(Integer, nullable=False)
-
-class FlatRateDetails(Base):
-    __tablename__ = "flat_rate_details"
-
-    flat_rate_details_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    flat_rate_name = Column(String, nullable=False, unique=True)
-    rate_per_kw_hr = Column(Integer, nullable=False)
+    
 
 class FlatRateToRoom(Base):
     __tablename__ = "flat_rate_to_room"

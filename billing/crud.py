@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-
+from sqlalchemy import func, delete, select
 from billing import models, schemas
 from billing.auth import get_password_hash
 
@@ -451,90 +450,135 @@ def delete_user_creation(db: Session, user_creation: schemas.UserCreationDelete)
     db.delete(db_user)
     db.commit()
     return {"message": "User deletion successful"}
-
-#flat rate
+# flat_rate
 def get_flat_rate(db: Session, flat_rate_name: str):
-    flat_rate = db.query(models.FlatRate).filter(models.FlatRate.flat_rate_name == flat_rate_name).all()
-    flat_rate_details = db.query(models.FlatRateDetails).filter(models.FlatRateDetails.flat_rate_name == flat_rate_name).first()
-    flat_rate_base_values = []
-    increments = []
-    value_of_increments = []
-
-    for flat_rate_entry in flat_rate:
-        flat_rate_base_values.append(flat_rate_entry.flat_rate_base_value)
-        increments.append(flat_rate_entry.increment)
-        value_of_increments.append(flat_rate_entry.value_of_increment)
-
-    rate_per_kw_hr = flat_rate_details.rate_per_kw_hr
-
+    
+    flat_rates = db.query(models.FlatRate).filter(models.FlatRate.flat_rate_name == flat_rate_name).all()
+    if not flat_rates:
+        return None
+    flat_rate_base_values_list = []
+    flat_rate_uptos_list = []
+    flat_rate_increments_list = []
+    flat_rate_value_of_increments_list = []
+    rate_per_kw_hr_list = []
+    for flat_rate in flat_rates:
+        flat_rate_uptos_list.append(flat_rate.flat_rate_upto)
+        flat_rate_base_values_list.append(flat_rate.flat_rate_base_value)
+        rate_per_kw_hr_list.append(flat_rate.rate_per_kw_hr)
+        flat_rate_increments = db.query(models.FlatRateIncrement).filter(models.FlatRateIncrement.flat_rate_id == flat_rate.flat_rate_id).all()
+        increments = []
+        value_of_increments = []
+        
+        for flat_rate_increment in flat_rate_increments:
+            increments.append(flat_rate_increment.increment)
+            value_of_increments.append(flat_rate_increment.value_of_increment)
+        
+        flat_rate_increments_list.append(increments)
+        flat_rate_value_of_increments_list.append(value_of_increments)       
+    
     return {
         "flat_rate_name": flat_rate_name,
-        "flat_rate_base_value": flat_rate_base_values,
-        "increment": increments,
-        "value_of_increment": value_of_increments,
-        "rate_per_kw_hr": rate_per_kw_hr,
+        "flat_rate_base_value": flat_rate_base_values_list,
+        "flat_rate_upto": flat_rate_uptos_list,
+        "increment": flat_rate_increments_list,
+        "value_of_increment": flat_rate_value_of_increments_list,
+        "rate_per_kw_hr": rate_per_kw_hr_list,
     }
 
+
 def get_flat_rates(db: Session, skip: int = 0, limit: int = 100):
-    flat_rate_details = db.query(models.FlatRateDetails).offset(skip).limit(limit).all()
+    flat_rates = (
+        db.query(models.FlatRate)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     results = []
 
-    for flat_rate_detail in flat_rate_details:
-        flat_rate_name = flat_rate_detail.flat_rate_name
-        flat_rate_data = get_flat_rate(db, flat_rate_name)
-        results.append(flat_rate_data)
+    for flat_rate in flat_rates:
+        flat_rate_name = flat_rate.flat_rate_name
+        flat_rate_details = get_flat_rate(db, flat_rate_name)
+        results.append(flat_rate_details)
 
     return results
 
 def create_flat_rate(db: Session, flat_rate: schemas.FlatRateCreate):
     flat_rate_name = flat_rate.flat_rate_name
     flat_rate_base_values = flat_rate.flat_rate_base_value
+    flat_rate_uptos = flat_rate.flat_rate_upto
     increments = flat_rate.increment
     value_of_increments = flat_rate.value_of_increment
-    rate_per_kw_hr = flat_rate.rate_per_kw_hr
-    for flat_rate_base_value, increment, value_of_increment in zip(flat_rate_base_values, increments, value_of_increments):
-        db_flat_rate = models.FlatRate(flat_rate_name=flat_rate_name, flat_rate_base_value=flat_rate_base_value, increment=increment, value_of_increment=value_of_increment)
+    rate_per_kw_hrs = flat_rate.rate_per_kw_hr
+    if not (len(flat_rate_base_values) == len(flat_rate_uptos) == len(increments) == len(value_of_increments) == len(rate_per_kw_hrs)):
+        return None
+    flat_rate_ids = []
+    for flat_rate_base_value, flat_rate_upto, rate_per_kw_hr in zip(flat_rate_base_values, flat_rate_uptos, rate_per_kw_hrs):
+        db_flat_rate = models.FlatRate(flat_rate_name=flat_rate_name, flat_rate_base_value=flat_rate_base_value, flat_rate_upto=flat_rate_upto, rate_per_kw_hr=rate_per_kw_hr)
         db.add(db_flat_rate)
         db.flush()
-    db_flat_rate_details = models.FlatRateDetails(flat_rate_name=flat_rate_name, rate_per_kw_hr=rate_per_kw_hr)
-    db.add(db_flat_rate_details)
-    db.flush()
+        flat_rate_ids.append(db_flat_rate.flat_rate_id)
+    i = 0
+    for increment_list, value_of_increment_list in zip(increments, value_of_increments):
+        if increment_list is not None and len(increment_list) > 0:
+            for increment, value_of_increment in zip(increment_list, value_of_increment_list):
+                db_flat_rate_increment = models.FlatRateIncrement(flat_rate_id=flat_rate_ids[i], increment=increment, value_of_increment=value_of_increment)
+                db.add(db_flat_rate_increment)
+                db.flush()
+        i += 1
     db.commit()
     db.refresh(db_flat_rate)
-    db.refresh(db_flat_rate_details)
+    db.refresh(db_flat_rate_increment)
     return db_flat_rate
+    # return db_flat_rate
 
 def update_flat_rate(db: Session, flat_rate: schemas.FlatRateUpdate):
-    # delete old flat rate
+    # delete prev flat rate
     flat_rate_name = flat_rate.flat_rate_name
-    flat_rate_name = flat_rate.flat_rate_name
-    db.query(models.FlatRate).filter(models.FlatRate.flat_rate_name == flat_rate_name).delete()
-    db.query(models.FlatRateDetails).filter(models.FlatRateDetails.flat_rate_name == flat_rate_name).delete()
+    flat_rate_ids = db.query(models.FlatRate.flat_rate_id).filter(models.FlatRate.flat_rate_name == flat_rate_name).all()
     
-    # create new flat rate
+    flat_rate_ids = [flat_rate_id for (flat_rate_id,) in flat_rate_ids]
+    
+    for flat_rate_id in flat_rate_ids:
+        db.query(models.FlatRateIncrement).filter(models.FlatRateIncrement.flat_rate_id == flat_rate_id).delete()
+    db.query(models.FlatRate).filter(models.FlatRate.flat_rate_name == flat_rate_name).delete()
+    
+    # add new one
+    flat_rate_name = flat_rate.flat_rate_name
     flat_rate_base_values = flat_rate.flat_rate_base_value
+    flat_rate_uptos = flat_rate.flat_rate_upto
     increments = flat_rate.increment
     value_of_increments = flat_rate.value_of_increment
-    rate_per_kw_hr = flat_rate.rate_per_kw_hr
-    for flat_rate_base_value, increment, value_of_increment in zip(flat_rate_base_values, increments, value_of_increments):
-        db_flat_rate = models.FlatRate(flat_rate_name=flat_rate_name, flat_rate_base_value=flat_rate_base_value, increment=increment, value_of_increment=value_of_increment)
+    rate_per_kw_hrs = flat_rate.rate_per_kw_hr
+    flat_rate_ids = []
+    for flat_rate_base_value, flat_rate_upto, rate_per_kw_hr in zip(flat_rate_base_values, flat_rate_uptos, rate_per_kw_hrs):
+        db_flat_rate = models.FlatRate(flat_rate_name=flat_rate_name, flat_rate_base_value=flat_rate_base_value, flat_rate_upto=flat_rate_upto, rate_per_kw_hr=rate_per_kw_hr)
         db.add(db_flat_rate)
         db.flush()
-    db_flat_rate_details = models.FlatRateDetails(flat_rate_name=flat_rate_name, rate_per_kw_hr=rate_per_kw_hr)
-    db.add(db_flat_rate_details)
-    db.flush()
+        flat_rate_ids.append(db_flat_rate.flat_rate_id)
+    i = 0
+    for increment_list, value_of_increment_list in zip(increments, value_of_increments):
+        if increment_list is not None and len(increment_list) > 0:
+            for increment, value_of_increment in zip(increment_list, value_of_increment_list):
+                db_flat_rate_increment = models.FlatRateIncrement(flat_rate_id=flat_rate_ids[i], increment=increment, value_of_increment=value_of_increment)
+                db.add(db_flat_rate_increment)
+                db.flush()
+        i += 1
     db.commit()
     db.refresh(db_flat_rate)
-    db.refresh(db_flat_rate_details)
-    return db_flat_rate
+    db.refresh(db_flat_rate_increment)
+
 
 def delete_flat_rate(db: Session, flat_rate: schemas.FlatRateDelete):
     flat_rate_name = flat_rate.flat_rate_name
+    flat_rate_ids = db.query(models.FlatRate.flat_rate_id).filter(models.FlatRate.flat_rate_name == flat_rate_name).all()
+    
+    flat_rate_ids = [flat_rate_id for (flat_rate_id,) in flat_rate_ids]
+    
+    for flat_rate_id in flat_rate_ids:
+        db.query(models.FlatRateIncrement).filter(models.FlatRateIncrement.flat_rate_id == flat_rate_id).delete()
     db.query(models.FlatRate).filter(models.FlatRate.flat_rate_name == flat_rate_name).delete()
-    db.query(models.FlatRateDetails).filter(models.FlatRateDetails.flat_rate_name == flat_rate_name).delete()
     db.commit()
-    return
-
+    return 
 # meter rate
 def get_meter_rate(db: Session, meter_rate_name: str):
     mtr_rates = db.query(models.MeterRate).filter(models.MeterRate.meter_rate_name == meter_rate_name).all()
