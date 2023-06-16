@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, validator
+from typing import Optional, List
 
 
 
@@ -265,25 +265,42 @@ class UserCreationDelete(BaseModel):
 
 # Flat Rate
 class FlatRateBase(BaseModel):
-    flat_rate_id:int
+    flat_rate_name: str
 
     class Config:
         orm_mode = True
 
 class FlatRateCreate(BaseModel):
     flat_rate_name: str
-    flat_rate_value: int
+    flat_rate_base_value: List[int]
+    flat_rate_upto: List[int]
+    increment: List[List[int]]
+    value_of_increment: List[List[int]]
+    rate_per_kw_hr: List[int]
 
     class Config:
         orm_mode = True
 
-class FlatRateRead(FlatRateBase):
+class FlatRateRead(BaseModel):
     flat_rate_name: str
-    flat_rate_value: int
+    flat_rate_base_value: List[int]
+    flat_rate_upto: List[int]
+    increment: List[List[int]]
+    value_of_increment: List[List[int]]
+    rate_per_kw_hr: List[int]
+    
+    class Config:
+        orm_mode = True
 
 class FlatRateUpdate(FlatRateBase):
     flat_rate_name: str
-    flat_rate_value: int
+    flat_rate_base_value: List[int]
+    flat_rate_upto: List[int]
+    increment: List[List[int]]
+    value_of_increment: List[List[int]]
+    rate_per_kw_hr: List[int]
+    
+
 
 class FlatRateDelete(FlatRateBase):
     pass
@@ -313,28 +330,73 @@ class FlatRateToRoomDelete(FlatRateToRoomBase):
 
 # Meter Rate
 class MeterRateBase(BaseModel):
-    meter_rate_id:int
+    meter_rate_name:str
 
     class Config:
         orm_mode = True
 
 class MeterRateCreate(BaseModel):
     meter_rate_name: str
-    meter_rate_upto: int
-    meter_rate_value: int
-
+    meter_rate_upto: List[int]
+    meter_rate_value: List[int]
+    electricity_duty: int
+    supply_type: str
+    rate_per_kw_hr: int
+    @validator('supply_type')
+    def validate_supply_type(cls, supply_type):
+        valid_values = ['3-phase', 'single-phase']
+        if supply_type not in valid_values:
+            raise ValueError(f"Invalid supply_type value. Accepted values are: {', '.join(valid_values)}")
+        return supply_type
+    @validator('meter_rate_upto')
+    def validate_meter_rate_upto(cls, meter_rate_upto, values):
+        if 'meter_rate_value' in values and len(meter_rate_upto) != len(values['meter_rate_value']):
+            raise ValueError("The 'meter_rate_upto' and 'meter_rate_value' lists must have equal lengths")
+        return meter_rate_upto
+    @validator('meter_rate_value')
+    def validate_meter_rate_value(cls, meter_rate_value, values):
+        if 'meter_rate_upto' in values and len(meter_rate_value) != len(values['meter_rate_upto']):
+            raise ValueError("The 'meter_rate_upto' and 'meter_rate_value' lists must have equal lengths")
+        return meter_rate_value
     class Config:
         orm_mode = True
 
-class MeterRateRead(MeterRateBase):
+class MeterRateRead(BaseModel):
     meter_rate_name: str
-    meter_rate_upto: int
-    meter_rate_value: int
+    meter_rate_upto: List[int]
+    meter_rate_value: List[int]
+    electricity_duty: int
+    supply_type: str
+    rate_per_kw_hr: int
+    class Config:
+        orm_mode = True
 
-class MeterRateUpdate(MeterRateRead):
+class MeterRateUpdate(BaseModel):
     meter_rate_name: str
-    meter_rate_upto: int
-    meter_rate_value: int
+    meter_rate_upto: List[int]
+    meter_rate_value: List[int]
+    electricity_duty: int
+    supply_type: str
+    rate_per_kw_hr: int
+    class Config:
+        orm_mode = True
+    
+    @validator('supply_type')
+    def validate_supply_type(cls, supply_type):
+        valid_values = ['3-phase', 'single-phase']
+        if supply_type not in valid_values:
+            raise ValueError(f"Invalid supply_type value. Accepted values are: {', '.join(valid_values)}")
+        return supply_type
+    @validator('meter_rate_upto')
+    def validate_meter_rate_upto(cls, meter_rate_upto, values):
+        if 'meter_rate_value' in values and len(meter_rate_upto) != len(values['meter_rate_value']):
+            raise ValueError("The 'meter_rate_upto' and 'meter_rate_value' lists must have equal lengths")
+        return meter_rate_upto
+    @validator('meter_rate_value')
+    def validate_meter_rate_value(cls, meter_rate_value, values):
+        if 'meter_rate_upto' in values and len(meter_rate_value) != len(values['meter_rate_upto']):
+            raise ValueError("The 'meter_rate_upto' and 'meter_rate_value' lists must have equal lengths")
+        return meter_rate_value
 
 class MeterRateDelete(MeterRateBase):
     pass

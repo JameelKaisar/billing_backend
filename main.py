@@ -498,16 +498,19 @@ def delete_user_creation(user_creation: schemas.UserCreationDelete, db: Session 
     return user_creation
 
 # flat_rate
-@app.post("/flat_rate/", response_model=schemas.FlatRateRead)
+@app.post("/flat_rate/")
 def create_flat_rate(flat_rate: schemas.FlatRateCreate, db: Session = Depends(get_db)):
-    try:
-        return crud.create_flat_rate(db=db, flat_rate=flat_rate)
-    except:
-        raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
+    if crud.get_flat_rate(db, flat_rate.flat_rate_name):
+        raise HTTPException(status_code=400, detail="Flat Rate already exists")
+    if True:
+        if crud.create_flat_rate(db=db, flat_rate=flat_rate) is None:
+            raise HTTPException(status_code=400, detail="Pass Valid parameters")
+    # except:
+    #     raise HTTPException(status_code=400, detail="Something went wrong")
 
 @app.get("/flat_rate/", response_model=schemas.FlatRateRead)
-def read_flat_rate(flat_rate_id: int, db: Session = Depends(get_db)):
-    flat_rate = crud.get_flat_rate(db, flat_rate_id)
+def read_flat_rate(flat_rate_name: str, db: Session = Depends(get_db)):
+    flat_rate = crud.get_flat_rate(db, flat_rate_name)
     if not flat_rate:
         raise HTTPException(status_code=400, detail="Flat Rate not found")
     return flat_rate
@@ -517,30 +520,33 @@ def get_flat_rates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     flat_rates = crud.get_flat_rates(db, skip=skip, limit=limit)
     return flat_rates
 
-@app.put("/flat_rate/", response_model=schemas.FlatRateRead)
+@app.put("/flat_rate/")
 def update_flat_rate(flat_rate: schemas.FlatRateUpdate, db: Session = Depends(get_db)):
-    fr = crud.get_flat_rate(db, flat_rate.flat_rate_id)
+    fr = crud.get_flat_rate(db, flat_rate.flat_rate_name)
     if not fr:
         raise HTTPException(status_code=400, detail="Flat Rate not found")
     try:
-        return crud.update_flat_rate(db, flat_rate)
+        if crud.update_flat_rate(db, flat_rate) is None:
+            raise HTTPException(status_code=400, detail="Pass Valid parameters")
     except:
-        raise HTTPException(status_code=400, detail="Flat Rate Code already exists")
+        raise HTTPException(status_code=400, detail="Something went wrong")
 
-@app.delete("/flat_rate/", response_model=schemas.FlatRateRead)
+@app.delete("/flat_rate/")
 def delete_flat_rate(flat_rate: schemas.FlatRateDelete, db: Session = Depends(get_db)):
-    flat_rate = crud.get_flat_rate(db, flat_rate.flat_rate_id)
-    if not flat_rate:
+    exists = crud.get_flat_rate(db, flat_rate.flat_rate_name)
+    if not exists:
         raise HTTPException(status_code=400, detail="Flat Rate not found")
-    crud.delete_flat_rate(db, flat_rate)
-    return flat_rate
+    try:
+        crud.delete_flat_rate(db, flat_rate)
+        return flat_rate
+    except:
+        raise HTTPException(status_code=400, detail="Something went wrong")
 
 # meter_rate
-@app.post("/meter_rate/", response_model=schemas.MeterRateRead)
+@app.post("/meter_rate/")
 def create_meter_rate(meter_rate: schemas.MeterRateCreate, db: Session = Depends(get_db)):
         mtr_rate = db.query(MeterRate).filter(
                 MeterRate.meter_rate_name == meter_rate.meter_rate_name,
-                MeterRate.meter_rate_upto == meter_rate.meter_rate_upto
         ).first()
         if not mtr_rate:
             return crud.create_meter_rate(db=db, meter_rate=meter_rate)
@@ -548,8 +554,8 @@ def create_meter_rate(meter_rate: schemas.MeterRateCreate, db: Session = Depends
             raise HTTPException(status_code=400, detail="Meter Rate Coding already fed")
 
 @app.get("/meter_rate/", response_model=schemas.MeterRateRead)
-def read_meter_rate(meter_rate_id: int, db: Session = Depends(get_db)):
-    meter_rate = crud.get_meter_rate(db, meter_rate_id)
+def read_meter_rate(meter_rate_name: str, db: Session = Depends(get_db)):
+    meter_rate = crud.get_meter_rate(db, meter_rate_name)
     if not meter_rate:
         raise HTTPException(status_code=400, detail="Meter Rate not found")
     return meter_rate
@@ -557,29 +563,36 @@ def read_meter_rate(meter_rate_id: int, db: Session = Depends(get_db)):
 @app.get("/meter_rates/", response_model=list[schemas.MeterRateRead])
 def get_meter_rates(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     meter_rates = crud.get_meter_rates(db, skip=skip, limit=limit)
+    if not meter_rates:
+        raise HTTPException(status_code=400, detail="Meter Rate not found")
     return meter_rates
 
-@app.put("/meter_rate/", response_model=schemas.MeterRateRead)
+@app.put("/meter_rate/")
 def update_meter_rate(meter_rate: schemas.MeterRateUpdate, db: Session = Depends(get_db)):
-    mtr_rate = crud.get_meter_rate(db, meter_rate.meter_rate_id)
-    if not mtr_rate:
+    if not crud.get_meter_rate(db, meter_rate.meter_rate_name):
         raise HTTPException(status_code=400, detail="Meter Rate not found")
-    mtr_rate = db.query(MeterRate).filter(
-        MeterRate.meter_rate_name == meter_rate.meter_rate_name,
-        MeterRate.meter_rate_upto == meter_rate.meter_rate_upto
-    ).first()
-    if not mtr_rate:
-        return crud.update_meter_rate(db, meter_rate)
-    else:
-        raise HTTPException(status_code=400, detail="Meter Rate Coding already fed")
+    return crud.update_meter_rate(db, meter_rate)
+    # mtr_rate = crud.get_meter_rate(db, meter_rate.meter_rate_name)
+    # if not mtr_rate:
+    #     raise HTTPException(status_code=400, detail="Meter Rate not found")
+    # mtr_rate = db.query(MeterRate).filter(
+    #     MeterRate.meter_rate_name == meter_rate.meter_rate_name,
+    #     MeterRate.meter_rate_upto == meter_rate.meter_rate_upto
+    # ).first()
+    # if not mtr_rate:
+    # else:
+    #     raise HTTPException(status_code=400, detail="Meter Rate Coding already fed")
     
-@app.delete("/meter_rate/", response_model=schemas.MeterRateRead)
+@app.delete("/meter_rate/")
 def delete_meter_rate(meter_rate: schemas.MeterRateDelete, db: Session = Depends(get_db)):
-    meter_rate = crud.get_meter_rate(db, meter_rate.meter_rate_id)
-    if not meter_rate:
+    try:
+        mtr_rate = crud.get_meter_rate(db, meter_rate.meter_rate_name)
+        if not mtr_rate:
+            raise HTTPException(status_code=400, detail="Meter Rate not found")
+        crud.delete_meter_rate(db, meter_rate)
+        return meter_rate
+    except:
         raise HTTPException(status_code=400, detail="Meter Rate not found")
-    crud.delete_meter_rate(db, meter_rate)
-    return meter_rate
 
 # flat_rate_to_room
 @app.post("/flat_rate_to_room/", response_model=schemas.FlatRateToRoomRead)
