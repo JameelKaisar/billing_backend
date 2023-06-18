@@ -274,8 +274,8 @@ class FlatRateCreate(BaseModel):
     flat_rate_name: str
     flat_rate_base_value: List[int]
     flat_rate_upto: List[int]
-    increment: List[List[int]]
-    value_of_increment: List[List[int]]
+    increment: List[int]
+    value_of_increment: List[int]
     rate_per_kw_hr: List[int]
 
     class Config:
@@ -285,8 +285,8 @@ class FlatRateRead(BaseModel):
     flat_rate_name: str
     flat_rate_base_value: List[int]
     flat_rate_upto: List[int]
-    increment: List[List[int]]
-    value_of_increment: List[List[int]]
+    increment: List[int]
+    value_of_increment: List[int]
     rate_per_kw_hr: List[int]
     
     class Config:
@@ -296,8 +296,8 @@ class FlatRateUpdate(FlatRateBase):
     flat_rate_name: str
     flat_rate_base_value: List[int]
     flat_rate_upto: List[int]
-    increment: List[List[int]]
-    value_of_increment: List[List[int]]
+    increment: List[int]
+    value_of_increment: List[int]
     rate_per_kw_hr: List[int]
     
 
