@@ -468,15 +468,12 @@ def get_flat_rate(db: Session, flat_rate_name: str):
         flat_rate_base_values_list.append(flat_rate.flat_rate_base_value)
         rate_per_kw_hr_list.append(flat_rate.rate_per_kw_hr)
         flat_rate_increments = db.query(models.FlatRateIncrement).filter(models.FlatRateIncrement.flat_rate_id == flat_rate.flat_rate_id).all()
-        increments = []
-        value_of_increments = []
-        
         for flat_rate_increment in flat_rate_increments:
-            increments.append(flat_rate_increment.increment)
-            value_of_increments.append(flat_rate_increment.value_of_increment)
+            flat_rate_increments_list.append(flat_rate_increment.increment)
+            flat_rate_value_of_increments_list.append(flat_rate_increment.value_of_increment)
         
-        flat_rate_increments_list.append(increments)
-        flat_rate_value_of_increments_list.append(value_of_increments)       
+        # flat_rate_increments_list.append(flat_rate_increments_list)
+        # flat_rate_value_of_increments_list.append(flat_rate_value_of_increments_list)       
     
     return {
         "flat_rate_name": flat_rate_name,
@@ -495,12 +492,15 @@ def get_flat_rates(db: Session, skip: int = 0, limit: int = 100):
         .limit(limit)
         .all()
     )
+    unique_flat_rate_names = set()
     results = []
 
     for flat_rate in flat_rates:
         flat_rate_name = flat_rate.flat_rate_name
-        flat_rate_details = get_flat_rate(db, flat_rate_name)
-        results.append(flat_rate_details)
+        if flat_rate_name not in unique_flat_rate_names:
+            flat_rate_details = get_flat_rate(db, flat_rate_name)
+            results.append(flat_rate_details)
+            unique_flat_rate_names.add(flat_rate_name)
 
     return results
 
@@ -520,12 +520,10 @@ def create_flat_rate(db: Session, flat_rate: schemas.FlatRateCreate):
         db.flush()
         flat_rate_ids.append(db_flat_rate.flat_rate_id)
     i = 0
-    for increment_list, value_of_increment_list in zip(increments, value_of_increments):
-        if increment_list is not None and len(increment_list) > 0:
-            for increment, value_of_increment in zip(increment_list, value_of_increment_list):
-                db_flat_rate_increment = models.FlatRateIncrement(flat_rate_id=flat_rate_ids[i], increment=increment, value_of_increment=value_of_increment)
-                db.add(db_flat_rate_increment)
-                db.flush()
+    for increment, value_of_increment in zip(increments, value_of_increments):
+        db_flat_rate_increment = models.FlatRateIncrement(flat_rate_id=flat_rate_ids[i], increment=increment, value_of_increment=value_of_increment)
+        db.add(db_flat_rate_increment)
+        db.flush()
         i += 1
     db.commit()
     db.refresh(db_flat_rate)
@@ -560,12 +558,10 @@ def update_flat_rate(db: Session, flat_rate: schemas.FlatRateUpdate):
         db.flush()
         flat_rate_ids.append(db_flat_rate.flat_rate_id)
     i = 0
-    for increment_list, value_of_increment_list in zip(increments, value_of_increments):
-        if increment_list is not None and len(increment_list) > 0:
-            for increment, value_of_increment in zip(increment_list, value_of_increment_list):
-                db_flat_rate_increment = models.FlatRateIncrement(flat_rate_id=flat_rate_ids[i], increment=increment, value_of_increment=value_of_increment)
-                db.add(db_flat_rate_increment)
-                db.flush()
+    for increment, value_of_increment in zip(increments, value_of_increments):
+        db_flat_rate_increment = models.FlatRateIncrement(flat_rate_id=flat_rate_ids[i], increment=increment, value_of_increment=value_of_increment)
+        db.add(db_flat_rate_increment)
+        db.flush()
         i += 1
     db.commit()
     db.refresh(db_flat_rate)
